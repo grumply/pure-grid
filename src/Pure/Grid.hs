@@ -174,6 +174,145 @@ pattern Fourteen = "fourteen"
 pattern Fifteen = "fifteen"
 pattern Sixteen = "sixteen"
 
+data GridT = GridT Int
+instance Themeable GridT where
+    theme c (GridT cs) = do
+        is c $ do
+            apply $ do
+                display =: "-webkit-box"
+                display =: "-ms-flexbox"
+                display =: "flex"
+                "-webkit-box-orient" =: horizontal
+                "-webkit-box-direction" =: normal
+                "-ms-flex-direction" =: row
+                "flex-direction" =: row
+                "-ms-flex-wrap" =: wrap
+                "flex-wrap" =: wrap
+                "-webkit-box-align" =: stretch
+                "-ms-flex-align" =: stretch
+                "align-items" =: stretch
+                padding =: ems 0
+                margin =: neg (rems 1)
+            is ".relaxed" .> do
+                marginLeft =: neg (rems 1.5)
+                marginRight =: neg (rems 1.5)
+            is ".very" . is ".relaxed" .> do
+                marginLeft =: neg (rems 2.5)
+                marginRight =: neg (rems 2.5)
+            next c .>
+                marginTop =: rems 1
+            child ".column" . isn't ".row" 
+              . or is c . child ".row" . child ".column" .> do
+                position =: relative
+                display =: inlineBlock
+                width =: per 6.25
+                paddingLeft =: rems 1
+                paddingRight =: rems 1
+                verticalAlign =: top
+            child "*" .> do
+                paddingLeft =: rems 1
+                paddingRight =: rems 1
+            child ".row" .> do
+                display =: "-webkit-box"
+                display =: "-ms-flexbox"
+                display =: "flex"
+                "-webkit-box-orient" =: horizontal
+                "-webkit-box-direction" =: normal
+                "-ms-flex-direction" =: row
+                "flex-direction" =: row
+                "-ms-flex-wrap" =: wrap
+                "flex-wrap" =: wrap
+                "-webkit-box-pack" =: inherit
+                "-ms-flex-pack" =: inherit
+                "justify-content" =: inherit
+                "-webkit-box-align" =: stretch
+                "-ms-flex-align" =: stretch
+                "align-items" =: stretch
+                important $ width =: per 100
+                padding =: rems 0
+                paddingTop =: rems 1
+                paddingBottom =: rems 1
+            child ".column" . isn't ".row" .> do
+                paddingTop =: rems 1
+                paddingBottom =: rems 1
+            child ".row" . child ".column" .> do
+                marginTop =: ems 0
+                marginBottom =: ems 0
+            child c . is ":first-child" .> do
+                marginTop =: ems 0
+            child c . is ":last-child" .> do
+                marginBottom =: ems 0
+            is ".page" .> do
+                width =: auto
+                marginLeft =: ems 0
+                marginRight =: ems 0
+            for_ [("(max-width: 767px)",ems 0)
+                 ,("(min-width 768px) and (max-width: 991px)",ems 2)
+                 ,("(min-width 992px) and (max-width: 1199px)",per 3)
+                 ,("(min-width 1200px) and (max-width: 1919px)",per 15)
+                 ,("(min-width 1920px)",per 23)
+                 ] $ \(med,pad) -> atMedia ("only screen and " <> med) .> do
+                    paddingLeft =: pad
+                    paddingRight =: pad
+            child ".column" . is ":only-child" . or is c . child ".row" . child ".column" . is ":only-child" .>
+                width =: per 100
+            for [1..cs] $ \i -> do
+              is (dec i) . is "column" . child ".row" . child ".column" . or is c . is One . is "column" . child ".column" . isn't ".row" .>
+                width =: per (100 / i)
+              child (dec i) . is "column" . is ".row" . child ".column" .>
+                important $ width =: per (100 / i)
+              child ".row" . child (dec i) . is ".wide" . is ".column"
+                . or is c . child ".column" . is ".row" . child (dec i) . is ".wide"  . is ".column"
+                . or is c . child (dec i) . is ".wide" . is ".column" 
+                . or is c . is ".column" . child (dec i) . is ".wide" . is ".column" .> do
+                    important $ width =: per (100 / (cs - (i - 1)))
+            is ".celled" . is ".page" .> do
+                "-webkit-box-shadow" =: none
+                "box-shadow" =: none
+            is ".centered"
+              . or is c . is ".centered" . child ".row" 
+              . or is c . is ".centered" . is ".row" .> do
+                textAlign =: center
+                "-webkit-box-pack" =: center
+                "-ms-flex-pack" =: center
+                justifyContent =: center
+            child ".centered" . is ".column" 
+              . or is c . child ".row" . child ".centered" . is ".column" .> do
+                display =: block
+                marginLeft =: auto
+                marginRight =: auto
+            is ".relaxed" . child ".column" . isn't ".row" 
+              . or is c . is ".relaxed" . child ".row" . child ".column" 
+              . or is c . child ".relaxed" . is ".row" . child ".column" .> do
+                paddingLeft =: rems 1.5
+                paddingRight =: rems 1.5
+            is ".very" . is ".relaxed" . child ".column" .isn't ".row"
+              . or is c . is ".very" . is ".relaxed" . child ".row" . child ".column" 
+              . or is c . child ".very" . is ".relaxed" . is ".row" . child ".column" .> do
+                paddingLeft =: rems 2.5
+                paddingRight =: rems 2.5
+            is ".padded" . isn't ".vertically" . isn't ".horizontally" .>
+              important $ margin =: ems 0
+            is ".horizontal" . is ".padded" .> do
+                important $ marginLeft =: ems 0
+                important $ marginRight =: ems 0
+            is ".vertically" . is ".padded" .> do
+                important $ marginTop =: ems 0
+                important $ marginBottom =: ems 0
+            has ".left" . is ".foated" . is ".column" .> 
+                marginRight =: auto
+            has ".right" . is ".foated" . is ".column" .> 
+                marginLeft =: auto
+            is ".divided" . isn't ".vertically" . child ".column" . isn't ".row"
+              . or is ".divided" . isn't ".vertically" . child ".row" . child ".column" .> do
+                "-webkit-box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
+                "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
+            is 
+
+
+            
+                
+
 data Grid = Grid_
     { as :: Features -> [View] -> View
     , features :: Features
@@ -218,10 +357,9 @@ instance Pure Grid where
                 , textAlign
                 , verticalAlign
                 , widthProp columns "column" True
-                , "grid"
                 ]
         in
-            as (features & Classes cs) children
+            as (features & Classes cs & Theme GridT) children
 
 instance HasProp As Grid where
     type Prop As Grid = Features -> [View] -> View
