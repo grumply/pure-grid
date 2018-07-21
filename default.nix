@@ -1,4 +1,4 @@
-{ mkDerivation, base, pure, pure-cond, pure-prop, pure-css, pure-styles, pure-theme, pure-txt, stdenv
+{ mkDerivation, base, hashable, pure, pure-cond, pure-prop, pure-css, pure-styles, pure-theme, pure-txt, stdenv
 }:
 mkDerivation {
   pname = "pure-grid";
@@ -6,7 +6,7 @@ mkDerivation {
   src = ./.;
   isLibrary = true;
   libraryHaskellDepends = [
-    base pure pure-cond pure-prop pure-css pure-styles pure-theme pure-txt
+    base hashable pure pure-cond pure-prop pure-css pure-styles pure-theme pure-txt
   ];
   license = stdenv.lib.licenses.bsd3;
 }

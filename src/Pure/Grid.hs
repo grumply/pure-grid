@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, PatternSynonyms, DuplicateRecordFields, RecordWildCards, ViewPatterns, MultiParamTypeClasses, TypeFamilies, DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings, PatternSynonyms, DuplicateRecordFields, RecordWildCards, ViewPatterns, MultiParamTypeClasses, TypeFamilies, DeriveGeneric, TemplateHaskell #-}
 module Pure.Grid where
 
 import Pure hiding (color,textAlign,verticalAlign,width,Color_)
@@ -24,6 +24,8 @@ import Data.Monoid ((<>))
 import GHC.Generics as G
 
 import Prelude hiding (or)
+
+import Pure.Grid.Theme
 
 widthProp :: Txt -> Txt -> Bool -> Txt
 widthProp val widthClass canEqual
@@ -186,9 +188,9 @@ pattern Fourteen = "fourteen"
 pattern Fifteen = "fifteen"
 pattern Sixteen = "sixteen"
 
-data GridT = GridT Int
 instance Themeable GridT where
-    theme c (GridT cs) = do
+    theme _ _ = $(mkRawCSS $ do
+        let c = "." <> gridThemeNamespace
         void $ is c $ do
             apply $ do
                 display =: "-webkit-box"
@@ -268,8 +270,8 @@ instance Themeable GridT where
                     paddingRight =: pad
             child ".column" . is ":only-child" . or is c . child ".row" . child ".column" . is ":only-child" .>
                 Styles.width =: per 100
-            for_ [1..fromIntegral cs] $ \i -> do
-              is (dec i) . is "column" . child ".row" . child ".column" . or is c . is One . is "column" . child ".column" . isn't ".row" .>
+            for_ [1..16] $ \i -> do
+              is (dec i) . is "column" . child ".row" . child ".column" . or is c . is "one" . is "column" . child ".column" . isn't ".row" .>
                 Styles.width =: per (100 / i)
               child (dec i) . is "column" . is ".row" . child ".column" .> do
                 important $ Styles.width =: per (100 / i)
@@ -277,7 +279,7 @@ instance Themeable GridT where
                 . or is c . child ".column" . is ".row" . child (dec i) . is ".wide"  . is ".column"
                 . or is c . child (dec i) . is ".wide" . is ".column" 
                 . or is c . is ".column" . child (dec i) . is ".wide" . is ".column" .> do
-                    important $ Styles.width =: per (100 / (fromIntegral cs - (i - 1)))
+                    important $ Styles.width =: per (100 / (fromIntegral 16 - (i - 1)))
             is ".celled" . is ".page" .> do
                 "-webkit-box-shadow" =: none
                 "box-shadow" =: none
@@ -584,6 +586,7 @@ instance Themeable GridT where
                 is ".celled" . is ".reversed" . is ".mobile" . child ".row" . child ".column" . is ":last-child" .> do
                     "-webkit-box-shadow" =: none
                     "box-shadow" =: none
+        )
             
             
                 
@@ -634,7 +637,7 @@ instance Pure Grid where
                 , widthProp columns "column" True
                 ]
         in
-            as (features & Classes cs & Theme (GridT 16)) children
+            as (features & Classes cs & Theme GridT) children
 
 instance HasProp As Grid where
     type Prop As Grid = Features -> [View] -> View
