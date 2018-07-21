@@ -14,7 +14,8 @@ library
   build-depends:
     base >=4.9 && <4.11,
     pure >= 0.7 && < 1,
-    pure-props >= 0.7 && < 1,
+    pure-cond >= 0.7 && < 1,
+    pure-prop >= 0.7 && < 1,
     pure-css >= 0.7 && < 1,
     pure-theme >= 0.1 && < 1,
     pure-styles >= 0.7 && < 1,
