@@ -50,9 +50,29 @@ multiProp val key
     _ -> ""
 (<<>) = (<>>)
 
-data Direction = Vertically | Horizontally | Both | Neither
-data Relaxed = Very | Simply
-data Celled = Internally | _
+data Direction = Neither | Vertically | Horizontally | Both
+  deriving (Eq,Ord,Generic,Default)
+directionClass :: Direction -> Txt -> Txt
+directionClass d suff = 
+    case d of
+        Vertically -> "vertically-" <> suff <<>> suff
+        Horizontally -> "horizontally-" <> suff <<>> suff
+        Both -> "padded"
+        Neither -> ""
+
+data Relaxed = Unrelaxed | Very | Simply
+  deriving (Eq,Ord,Generic,Default)
+relaxedClass :: Relaxed -> Txt
+relaxedClass Very      = "very-relaxed" <<>> "relaxed"
+relaxedClass Simply    = "relaxed"
+relaxedClass Unrelaxed = ""
+
+data Celled = NonCelled | Internally | Outlined
+  deriving (Eq,Ord,Generic,Default)
+celledClass :: Celled -> Txt
+celledClass Internally = "interally-celled" <<>> "celled"
+celledClass Outlined   = "celled"  
+celledClass NonCelled  = ""
 
 data As = As_
 pattern As :: HasProp As a => Prop As a -> a -> a
@@ -198,528 +218,548 @@ instance Themeable GridT where
             cs = ["one","two","three","four","five","six","seven","eight"
                  ,"nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen"
                  ]
-        void $ is c $ do
-            apply $ do
-                display =: "-webkit-box"
-                display =: "-ms-flexbox"
-                display =: "flex"
-                "-webkit-box-orient" =: horizontal
-                "-webkit-box-direction" =: normal
-                "-ms-flex-direction" =: row
-                "flex-direction" =: row
-                "-ms-flex-wrap" =: wrap
-                "flex-wrap" =: wrap
-                "-webkit-box-align" =: stretch
-                "-ms-flex-align" =: stretch
-                "align-items" =: stretch
-                padding =: ems 0
-                margin =: neg (rems 1)
-            is ".relaxed" .> do
-                marginLeft =: neg (rems 1.5)
-                marginRight =: neg (rems 1.5)
-            is ".very" . is ".relaxed" .> do
-                marginLeft =: neg (rems 2.5)
-                marginRight =: neg (rems 2.5)
-            next c .>
-                marginTop =: rems 1
-            child ".column" . isn't ".row" 
-              . or is c . child ".row" . child ".column" .> do
-                position =: relative
-                display =: inlineBlock
-                Styles.width =: per 6.25
-                paddingLeft =: rems 1
-                paddingRight =: rems 1
-                Styles.verticalAlign =: top
-            child "*" .> do
-                paddingLeft =: rems 1
-                paddingRight =: rems 1
-            child ".row" .> do
-                display =: "-webkit-box"
-                display =: "-ms-flexbox"
-                display =: "flex"
-                "-webkit-box-orient" =: horizontal
-                "-webkit-box-direction" =: normal
-                "-ms-flex-direction" =: row
-                "flex-direction" =: row
-                "-ms-flex-wrap" =: wrap
-                "flex-wrap" =: wrap
-                "-webkit-box-pack" =: inherit
-                "-ms-flex-pack" =: inherit
-                "justify-content" =: inherit
-                "-webkit-box-align" =: stretch
-                "-ms-flex-align" =: stretch
-                "align-items" =: stretch
-                important $ Styles.width =: per 100
-                padding =: rems 0
-                paddingTop =: rems 1
-                paddingBottom =: rems 1
-            child ".column" . isn't ".row" .> do
-                paddingTop =: rems 1
-                paddingBottom =: rems 1
-            child ".row" . child ".column" .> do
-                marginTop =: ems 0
-                marginBottom =: ems 0
-            child c . is ":first-child" .> do
-                marginTop =: ems 0
-            child c . is ":last-child" .> do
-                marginBottom =: ems 0
-            is ".page" .> do
-                Styles.width =: auto
-                marginLeft =: ems 0
-                marginRight =: ems 0
-            for_ [("(max-width: 767px)",ems 0)
-                 ,("(min-width 768px) and (max-width: 991px)",ems 2)
-                 ,("(min-width 992px) and (max-width: 1199px)",per 3)
-                 ,("(min-width 1200px) and (max-width: 1919px)",per 15)
-                 ,("(min-width 1920px)",per 23)
-                 ] $ \(med,pad) -> atMedia ("only screen and " <> med) .> do
+        is c .> do
+            display =: "-webkit-box"
+            display =: "-ms-flexbox"
+            display =: "flex"
+            "-webkit-box-orient" =: horizontal
+            "-webkit-box-direction" =: normal
+            "-ms-flex-direction" =: row
+            "flex-direction" =: row
+            "-ms-flex-wrap" =: wrap
+            "flex-wrap" =: wrap
+            "-webkit-box-align" =: stretch
+            "-ms-flex-align" =: stretch
+            "align-items" =: stretch
+            padding =: ems 0
+            margin =: neg (rems 1)
+        is c . is ".relaxed" .> do
+            marginLeft =: neg (rems 1.5)
+            marginRight =: neg (rems 1.5)
+        is c . is ".relaxed" . is ".very-relaxed" .> do
+            marginLeft =: neg (rems 2.5)
+            marginRight =: neg (rems 2.5)
+        is c . next c .>
+            marginTop =: rems 1
+        is c . child ".column" . isn't ".row" 
+          . or is c . child ".row" . child ".column" .> do
+            position =: relative
+            display =: inlineBlock
+            Styles.width =: per 6.25
+            paddingLeft =: rems 1
+            paddingRight =: rems 1
+            Styles.verticalAlign =: top
+        is c . child "*" .> do
+            paddingLeft =: rems 1
+            paddingRight =: rems 1
+        is c . child ".row" .> do
+            display =: "-webkit-box"
+            display =: "-ms-flexbox"
+            display =: "flex"
+            "-webkit-box-orient" =: horizontal
+            "-webkit-box-direction" =: normal
+            "-ms-flex-direction" =: row
+            "flex-direction" =: row
+            "-ms-flex-wrap" =: wrap
+            "flex-wrap" =: wrap
+            "-webkit-box-pack" =: inherit
+            "-ms-flex-pack" =: inherit
+            "justify-content" =: inherit
+            "-webkit-box-align" =: stretch
+            "-ms-flex-align" =: stretch
+            "align-items" =: stretch
+            important $ Styles.width =: per 100
+            padding =: rems 0
+            paddingTop =: rems 1
+            paddingBottom =: rems 1
+        is c . child ".column" . isn't ".row" .> do
+            paddingTop =: rems 1
+            paddingBottom =: rems 1
+        is c . child ".row" . child ".column" .> do
+            marginTop =: ems 0
+            marginBottom =: ems 0
+        is c . child ".row" . child "img" 
+          . or is c . child ".row" . child ".column" . child "img" .>
+            maxWidth =: per 100
+        is c . child c . is ":first-child" .> do
+            marginTop =: ems 0
+        is c . child c . is ":last-child" .> do
+            marginBottom =: ems 0
+        for_ [("(max-width: 767px)",ems 0)
+                ,("(min-width 768px) and (max-width: 991px)",ems 2)
+                ,("(min-width 992px) and (max-width: 1199px)",per 3)
+                ,("(min-width 1200px) and (max-width: 1919px)",per 15)
+                ,("(min-width 1920px)",per 23)
+                ] $ \(med,pad) -> atMedia ("only screen and " <> med) $
+                  is c . is ".page" .> do
+                    Styles.width =: auto
+                    marginLeft =: ems 0
+                    marginRight =: ems 0
                     paddingLeft =: pad
                     paddingRight =: pad
-            child ".column" . is ":only-child" . or is c . child ".row" . child ".column" . is ":only-child" .>
-                Styles.width =: per 100
-            for_ [1..16] $ \i -> do
-              is (dec i) . is "column" . child ".row" . child ".column" . or is c . is "one" . is "column" . child ".column" . isn't ".row" .>
-                Styles.width =: per (100 / i)
-              child (dec i) . is "column" . is ".row" . child ".column" .> do
-                important $ Styles.width =: per (100 / i)
-              child ".row" . child (dec i) . is ".wide" . is ".column"
-                . or is c . child ".column" . is ".row" . child (dec i) . is ".wide"  . is ".column"
-                . or is c . child (dec i) . is ".wide" . is ".column" 
-                . or is c . is ".column" . child (dec i) . is ".wide" . is ".column" .> do
-                    important $ Styles.width =: per (100 / (fromIntegral 16 - (i - 1)))
-            is ".celled" . is ".page" .> do
-                "-webkit-box-shadow" =: none
-                "box-shadow" =: none
-            is ".centered"
-              . or is c . is ".centered" . child ".row" 
-              . or is c . is ".centered" . is ".row" .> do
-                Styles.textAlign =: center
-                "-webkit-box-pack" =: center
-                "-ms-flex-pack" =: center
-                justifyContent =: center
-            child ".centered" . is ".column" 
-              . or is c . child ".row" . child ".centered" . is ".column" .> do
-                display =: block
-                marginLeft =: auto
-                marginRight =: auto
-            is ".relaxed" . child ".column" . isn't ".row" 
-              . or is c . is ".relaxed" . child ".row" . child ".column" 
-              . or is c . child ".relaxed" . is ".row" . child ".column" .> do
-                paddingLeft =: rems 1.5
-                paddingRight =: rems 1.5
-            is ".very" . is ".relaxed" . child ".column" .isn't ".row"
-              . or is c . is ".very" . is ".relaxed" . child ".row" . child ".column" 
-              . or is c . child ".very" . is ".relaxed" . is ".row" . child ".column" .> do
-                paddingLeft =: rems 2.5
-                paddingRight =: rems 2.5
-            is ".padded" . isn't ".vertically" . isn't ".horizontally" .> do
-              important $ margin =: ems 0
-            is ".horizontal" . is ".padded" .> do
-                important $ marginLeft =: ems 0
-                important $ marginRight =: ems 0
-            is ".vertically" . is ".padded" .> do
-                important $ marginTop =: ems 0
-                important $ marginBottom =: ems 0
-            has ".left" . is ".foated" . is ".column" .> 
-                marginRight =: auto
-            has ".right" . is ".foated" . is ".column" .> 
-                marginLeft =: auto
-            is ".divided" . isn't ".vertically-divided" . child ".column" . isn't ".row"
-              . or is c . is ".divided" . isn't ".vertically-divided" . child ".row" . child ".column" .> do
+        is c . child ".column" . is ":only-child" . or is c . child ".row" . child ".column" . is ":only-child" .>
+            Styles.width =: per 100
+        for_ cs $ \i -> do
+          is c . is i . child ".row" . child ".column" 
+            . or is c . is i . child ".column" . isn't ".row" .>
+              Styles.width =: per (100 / i)
+          is c . child i . is ".row" . child ".column" .> do
+              important $ Styles.width =: per (100 / i)
+          is c . child ".row" . child i . is ".wide" . is ".column"
+            . or is c . child ".column" . is ".row" . child i . is ".wide"  . is ".column"
+            . or is c . child i . is ".wide" . is ".column"
+            . or is c . is ".column" . child i . is ".wide" . is ".column" .> do
+              important $ Styles.width =: per (100 / (fromIntegral 16 - (i - 1)))
+        is c . is ".celled" . is ".page" .> do
+            "-webkit-box-shadow" =: none
+            "box-shadow" =: none
+        is c . is ".centered"
+          . or is c . is ".centered" . child ".row" 
+          . or is c . is ".centered" . is ".row" .> do
+            Styles.textAlign =: center
+            "-webkit-box-pack" =: center
+            "-ms-flex-pack" =: center
+            justifyContent =: center
+        is c . child ".centered" . is ".column" 
+          . or is c . child ".row" . child ".centered" . is ".column" .> do
+            display =: block
+            marginLeft =: auto
+            marginRight =: auto
+        is c . is ".relaxed" . child ".column" . isn't ".row" 
+          . or is c . is ".relaxed" . child ".row" . child ".column" 
+          . or is c . child ".relaxed" . is ".row" . child ".column" .> do
+            paddingLeft =: rems 1.5
+            paddingRight =: rems 1.5
+        is c . is ".very-relaxed" . child ".column" .isn't ".row"
+          . or is c . is ".very-relaxed" . child ".row" . child ".column" 
+          . or is c . child ".very-relaxed" . is ".row" . child ".column" .> do
+            paddingLeft =: rems 2.5
+            paddingRight =: rems 2.5
+        is c . is ".padded" .> do
+            important $ margin =: ems 0
+        is c . is ".horizontally-padded" .> do
+            important $ marginLeft =: ems 0
+            important $ marginRight =: ems 0
+        is c . is ".vertically-padded" .> do
+            important $ marginTop =: ems 0
+            important $ marginBottom =: ems 0
+        is c . has ".left" . is ".foated" . is ".column" .> 
+            marginRight =: auto
+        is c . has ".right" . is ".foated" . is ".column" .> 
+            marginLeft =: auto
+        is c . is ".divided" . child ".column" . isn't ".row"
+          . or is c . is ".horizontally-divided" . child ".column" . isn't ".row"
+          . or is c . is ".divided" . child ".row" . child ".column"
+          . or is c . is ".horizontally-divided" . child ".row" . child ".column" .> do
+            "-webkit-box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
+            "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
+        is c . is ".vertically-divided" . child ".column" . isn't ".row"
+          . or is c . is ".vertically-divided" . child ".row" . child ".column" .> do
+            marginTop =: rems 1
+            marginBottom =: rems 1
+            paddingTop =: rems 0
+            paddingBottom =: rems 0
+        is c . is ".vertically-divided" . child ".row" .> do
+            marginTop =: ems 0
+            marginBottom =: ems 0
+        is c . is ".divided" . child ".column" . isn't ":first-child" 
+          . or is c . is ".horizontally-divided" . child ".column" . isn't ":first-child" 
+          . or is c . is ".divided" . child ".row" . child ".column" . isn't ":first-child"
+          . or is c . is ".horizontally-divided" . child ".row" . child ".column" . isn't ":first-child" .> do
+            "-webkit-box-shadow" =: none
+            "box-shadow" =: none
+        is c . is ".vertically-divided" . child ".row" . is ":first-child" . child ".column" .>
+            marginTop =: ems 0
+        is c . child ".divided" . is ".row" . child ".column"
+            . or is c . child ".horizontally-divided" . is ".row" . child ".column"
+            . or is c . child ".vertically-divided" . is ".row" . child ".column" .> do
+            "-webkit-box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
+            "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
+        child ".divided" . is ".row" . child ".column" . is ":first-child" .> do
+            . or is c . child ".horizontally-divided" . is ".row" . child ".column" . is ":first-child" .> do
+            . or is c . child ".vertically-divided" . is ".row" . child ".column" . is ":first-child" .> do
+            "-webkit-box-shadow" =: none
+            "box-shadow" =: none
+        is ".vertically-divided" . child ".row" .> 
+            position =: relative
+        is ".vertically-divided" . child ".row" . is ":before" .> do
+            position =: absolute
+            content =: emptyQuotes
+            top =: ems 0
+            left =: pxs 0
+            Styles.width =: "calc(" <> per 100 <> " - " <> rems 2 <> ")"
+            height =: pxs 1
+            margin =: per 0 <<>> rems 1
+            "-webkit-box-shadow" =: pxs 0 <<>> neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
+            "box-shadow" =: pxs 0 <<>> neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
+        is ".divided" . is ".padded"
+            . or is c . is ".divided" . is ".horizontally-padded"
+            . or is c . is ".divided" . is ".vertically-padded"
+            . or is c . is ".vertically-divided" . is ".padded"
+            . or is c . is ".vertically-divided" . is ".horizontally-padded"
+            . or is c . is ".vertically-divided" . is ".vertically-padded"
+            . or is c . is ".horizontally-divided" . is ".padded"
+            . or is c . is ".horizontally-divided" . is ".horizontally-padded"
+            . or is c . is ".horizontally-divided" . is ".vertically-padded" .>
+            Styles.width =: per 100
+        is ".vertically-divided" . child ".row" . is ":first-child" . is ":before" .> do
+            "-webkit-box-shadow" =: none
+            "box-shadow" =: none
+        is ".inverted" . is ".divided" . child ".column" . isn't ".row"
+            . or is c . is ".inverted" . is ".horizontally-divided" . child ".column" . isn't ".row"
+            . or is c . is ".inverted" . is ".divided" . child ".row" . child ".column"
+            . or is c . is ".inverted" . is ".horizontally-divided" . child ".row" . child ".column" .> do
+            "-webkit-box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(255,255,255,0.1)
+            "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(255,255,255,0.1)
+        is ".inverted" . is ".divided" . child ".column" . isn't ".row" . is ":first-child"
+            . or is c . is ".inverted" . is ".horizontally-divided" . child ".column" . isn't ".row" . is ":first-child"
+            . or is c . is ".inverted" . is ".divided" . child ".row" . child ".column" . is ":first-child" 
+            . or is c . is ".inverted" . is ".horizontally-divided" . child ".row" . child ".column" . is ":first-child" .> do
+            "-webkit-box-shadow" =: none
+            "box-shadow" =: none
+        is ".inverted" . is ".divided" . is ".vertically" . child ".row" . is ":before" .> do
+            "-webkit-box-shadow" =: pxs 0 <<>> neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> rgba(255,255,255,0.1)
+            "box-shadow" =: pxs 0 <<>> neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> rgba(255,255,255,0.1)
+        is ".relaxed" . is ".divided" . is ".vertically" . child ".row" . is ":before" .> do
+            marginLeft =: rems 1.5
+            marginRight =: rems 1.5
+            Styles.width =: "calc(" <> per 100 <> " - " <> rems 3 <> ")"
+        is ".relaxed" . is ".very" . is ".divided" . is ".vertically" . child ".row" . is ":before" .> do
+            marginLeft =: rems 5
+            marginRight =: rems 5
+            Styles.width =: "calc(" <> per 100 <> " - " <> rems 5 <> ")" -- is this right, shoud it not be rems 10?
+        is ".celled" .> do
+            Styles.width =: per 100
+            margin =: ems 1 <<>> ems 0
+            "-webkit-box-shadow" =: pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> pxs 1 <<>> "#D4D4D5"
+            "box-shadow" =: pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> pxs 1 <<>> "#D4D4D5"
+        is ".celled" . child ".row" .> do
+            important $ Styles.width =: per 100
+            margin =: ems 0
+            padding =: ems 0
+            "-webkit-box-shadow" =: pxs 0 <<>> neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> "#D4D4D5"
+            "box-shadow" =: pxs 0 <<>> neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> "#D4D4D5"
+        is ".celled" . child ".column" . isn't ".row" 
+            . or is c . is ".celled" . child ".row" . child ".column" .> do
+            "-webkit-box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> "#D4D4D5"
+            "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> "#D4D4D5"
+        is ".celled" . child ".column" . is ":first-child"
+            . or is c . is ".celled" . child ".row" . child ".column" . is ":first-child" .> do
+            "-webkit-box-shadow" =: none
+            "box-shadow" =: none
+        is ".celled" . child ".column" . isn't ".row"
+            . or is c . is ".celled" . child ".row" . child ".column" .> 
+            padding =: ems 1
+        is ".relaxed" . is ".celled" . child ".column" . isn't ".row"
+            . or is c . is ".relaxed" . is ".celled" . child ".row" . child ".column" .>
+            padding =: ems 1.5
+        is ".relaxed" . is ".very" . is ".celled" . child ".column" . isn't ".row"
+            . or is c . is ".relaxed" . is ".very" . is ".celled" . child ".row" . child ".column" .>
+            padding =: ems 2
+        is ".celled" . is ".internally" .> do
+            "-webkit-box-shadow" =: none
+            "box-shadow" =: none
+            margin =: ems 0
+        is ".celled" . is ".internally" . child ".row" . is ":first-child" 
+            . or is c . is ".celled" . is ".internally" . child ".row" . child ".column" . is ":first-child" .> do
+            "-webkit-box-shadow" =: none
+            "box-shadow" =: none
+        is ".aligned" . is ".top" . child ".column" . isn't ".row"
+            . or is c . is ".aligned" . is ".top" . child ".row" . child ".column"
+            . or is c . child ".aligned" . is ".top" . is ".row" . child ".column"
+            . or is c . child ".aligned" . is ".top" . is ".column" . isn't ".row"
+            . or is c . child ".row" . child ".aligned"  . is ".top" . is ".column" .> do
+            "-webkit-box-orient" =: vertical
+            "-webkit-box-direction" =: normal
+            "-ms-flex-direction" =: column
+            "flex-direction" =: column
+            "vertical-align" =: top
+            important $ "-ms-flex-item-align" =: start
+            important $ "align-self" =: "flex-start"
+        is ".aligned" . is ".middle" . child ".column" . isn't ".row"
+            . or is c . is ".aligned" . is ".middle" . child ".row" . child ".column"
+            . or is c . child ".aligned" . is ".middle" . is ".row" . child ".column"
+            . or is c . child ".aligned" . is ".middle" . is ".column" . isn't ".row"
+            . or is c . child ".row" . child ".aligned"  . is ".middle" . is ".column" .> do
+            "-webkit-box-orient" =: vertical
+            "-webkit-box-direction" =: normal
+            "-ms-flex-direction" =: column
+            "flex-direction" =: column
+            "vertical-align" =: middle
+            important $ "-ms-flex-item-align" =: center
+            important $ "align-self" =: center
+        is ".aligned" . is ".bottom" . child ".column" . isn't ".row"
+            . or is c . is ".aligned" . is ".bottom" . child ".row" . child ".column"
+            . or is c . child ".aligned" . is ".bottom" . is ".row" . child ".column"
+            . or is c . child ".aligned" . is ".bottom" . is ".column" . isn't ".row"
+            . or is c . child ".row" . child ".aligned"  . is ".bottom" . is ".column" .> do
+            "-webkit-box-orient" =: vertical
+            "-webkit-box-direction" =: normal
+            "-ms-flex-direction" =: column
+            "flex-direction" =: column
+            "vertical-align" =: bottom
+            important $ "-ms-flex-item-align" =: end
+            important $ "align-self" =: "flex-end"           
+        is ".stretched" . child ".row" . child ".column"
+            . or is c . is ".stretched" . child ".column"
+            . or is c . child ".row" . is ".stretched" . child ".column"
+            . or is c . child ".column" . is ".stretched" . isn't ".row"
+            . or is c . child ".row" . child ".column" . is ".stretched" .> do
+            important $ display =: "-webkit-inline-box"
+            important $ display =: "-ms-inline-flexbox"
+            important $ display =: "inline-flex"
+            "-ms-flex-item-align" =: "stretch"
+            "align-self" =: "stretch"
+            "-webkit-box-orient" =: vertical
+            "-webkit-box-direction" =: normal
+            "-ms-flex-direction" =: column
+            "flex-direction" =: column
+        is ".stretched" . child ".row" . child ".column" . child "*"
+            . or is c . is ".stretched" . child ".column" . child "*"
+            . or is c . child ".row" . is ".stretched" . child ".column" . child "*"
+            . or is c . child ".column" . is ".stretched" . isn't ".row"
+            . or is c . child ".row" . child ".column" . is ".stretched" . child "*" .> do
+            "-webkit-box-flex" =: one
+            "-ms-flex-positive" =: one
+            "flex-grow" =: one
+        is ".aligned" . is ".left" . child ".column"
+            . or is c . is ".aligned" . is ".left" . child ".row" . child ".column"
+            . or is c . child ".aligned" . is ".left" . is ".row" . child ".column"
+            . or is c . child ".aligned" . is ".left" . is ".column" . is ".column"
+            . or is c . child ".row" . child ".column"  . is ".column" . is ".aligned" . is ".left" .> do
+            "text-align" =: left
+            "-ms-flex-item-align" =: inherit
+            "align-self" =: inherit
+        is ".aligned" . is ".center" . child ".column"
+            . or is c . is ".aligned" . is ".center" . child ".row" . child ".column"
+            . or is c . child ".aligned" . is ".center" . is ".row" . child ".column"
+            . or is c . child ".aligned" . is ".center" . is ".column" . is ".column"
+            . or is c . child ".row" . child ".column"  . is ".column" . is ".aligned" . is ".center" .> do
+            "text-align" =: center
+            "-ms-flex-item-align" =: inherit
+            "align-self" =: inherit
+        is ".aligned" . is ".center" .> do
+            "-webkit-box-pack" =: center
+            "-ms-flex-pack" =: center
+            "justify-content" =: center
+        is ".aligned" . is ".right" . child ".column"
+            . or is c . is ".aligned" . is ".right" . child ".row" . child ".column"
+            . or is c . child ".aligned" . is ".right" . is ".row" . child ".column"
+            . or is c . child ".aligned" . is ".right" . is ".column" . is ".column"
+            . or is c . child ".row" . child ".column"  . is ".column" . is ".aligned" . is ".right" .> do
+            "text-align" =: right
+            "-ms-flex-item-align" =: inherit
+            "align-self" =: inherit
+        is ".justified" . child ".column"
+            . or is c . is ".justified" . child ".row" . child ".column"
+            . or is c . child ".row" . is ".justified" . child ".column"
+            . or is c . child ".column" . is ".column" . is ".justified"
+            . or is c . child ".row" . child ".column" . is ".column" . is ".justified" .> do
+            "text-align" =: "justify"
+            "-webkit-hyphens" =: auto
+            "-ms-hyphens" =: auto
+            "hyphens" =: auto
+        is ".width" . is ".equal" . child ".column" . isn't ".row"
+            . or is c . is ".width" . is ".equal" . child ".row" . child ".column"
+            . or is c . child ".row" . is ".width" . is ".equal" . child ".column" .> do
+            display =: inlineBlock
+            "-webkit-box-flex" =: one
+            "-ms-flex-positive" =: one
+            "flex-grow" =: one
+        is ".width" . is ".equal" . child ".column" . is ".wide"
+            . or is c . is ".width" . is ".equal" . child ".row" . child ".column" . is ".wide"
+            . or is c . child ".row" . is ".width" . is ".equal" . child ".column" . is ".wide" .> do
+            "-webkit-box-flex" =: zero
+            "-ms-flex-positive" =: zero
+            "flex-grow" =: zero
+        atMedia "only screen and (max-width: 767px)" $ do
+            is ".reversed" . is ".mobile"
+                . or is c . is ".reversed" . is ".mobile" . child ".row"
+                . or is c . child ".row" . is ".reversed" . is ".mobile" .> do
+                "-webkit-box-orient" =: "horizontal"
+                "-webkit-box-direction" =: "reverse"
+                "-ms-flex-direction" =: "row-reverse"
+                "flex-direction" =: "row-reverse"
+            is ".reversed" . is ".vertically" . is ".mobile"
+                . or is c . is ".stackable" .  is ".reversed" . is ".mobile" .> do
+                "-webkit-box-orient" =: "vertical"
+                "-webkit-box-direction" =: "reverse"
+                "-ms-flex-direction" =: "column-reverse"
+                "flex-direction" =: "column-reverse"
+            is ".reversed" . is ".mobile" . is ".divided" . isn't ".vertically-divided" . child ".column" . is ":first-child"
+                . or is c . is ".reversed" . is ".mobile" . isn't ".vertically-divided" . child ".row" . child ".column" . is ":first-child" .> do
                 "-webkit-box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
-                "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
-            is ".vertically-divided" . child ".column" . isn't ".row"
-              . or is c . is ".vertically-divided" . child ".row" . child ".column" .> do
-                marginTop =: rems 1
-                marginBottom =: rems 1
-                paddingTop =: rems 0
-                paddingBottom =: rems 0
-            is ".vertically-divided" . child ".row" .> do
-                marginTop =: ems 0
-                marginBottom =: ems 0
-            is ".divided" . child ".column" . isn't ":first-child" 
-              . or is c . is ".divided" . isn't ".vertically-divided" . child ".row" . child ".column" . isn't ":first-child" .> do
+                "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,35,38,0.15)
+            is ".reversed" . is ".mobile" . is ".divided" . isn't ".vertically-divided" . child ".column" . is ":last-child"
+                . or is c . is ".reversed" . is ".mobile" . isn't ".vertically-divided" . child ".row" . child ".column" . is ":last-child" .> do
                 "-webkit-box-shadow" =: none
                 "box-shadow" =: none
-            is ".vertically-divided" . child ".row" . is ":first-child" . child ".column" .>
-                marginTop =: ems 0
-            child ".divided" . is ".row" . child ".column" .> do
+            is ".reversed" . is ".vertically" . is ".mobile" . is ".divided" . is ".vertically-divided" . child ".column" . is ":first-child"
+                . or is c . is ".reversed" . is ".vertically" . is ".mobile" . is ".vertically-divided" . child ".row" . child ".column" . is ":first-child" .> do
                 "-webkit-box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
-                "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
-            child ".divided" . is ".row" . child ".column" . is ":first-child" .> do
+                "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,35,38,0.15)
+            is ".reversed" . is ".vertically" . is ".mobile" . is ".divided" . is ".vertically-divided" . child ".column" . is ":last-child"
+                . or is c . is ".reversed" . is ".vertically" . is ".mobile" . is ".vertically-divided" . child ".row" . child ".column" . is ":last-child" .> do
                 "-webkit-box-shadow" =: none
                 "box-shadow" =: none
-            is ".vertically-divided" . child ".row" .> 
-                position =: relative
-            is ".vertically-divided" . child ".row" . is ":before" .> do
-                position =: absolute
-                content =: emptyQuotes
-                top =: ems 0
-                left =: pxs 0
-                Styles.width =: "calc(" <> per 100 <> " - " <> rems 2 <> ")"
-                height =: pxs 1
-                margin =: per 0 <<>> rems 1
-                "-webkit-box-shadow" =: pxs 0 <<>> neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
-                "box-shadow" =: pxs 0 <<>> neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
-            is ".divided" . is ".padded" .>
-                Styles.width =: per 100
-            is ".divided" . is ".vertically" . child ".row" . is ":first-child" . is ":before" .> do
-                "-webkit-box-shadow" =: none
-                "box-shadow" =: none
-            is ".inverted" . is ".divided" . isn't ".vertically-divided" . child ".column" . isn't ".row"
-              . or is c . is ".inverted" . is ".divided" . isn't ".vertically-divided" . child ".row" . child ".column" .> do
-                "-webkit-box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(255,255,255,0.1)
-                "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(255,255,255,0.1)
-            is ".inverted" . is ".divided" . isn't ".vertically-divided" . child ".column" . isn't ".row" . is ":first-child"
-              . or is c . is ".inverted" . is ".divided" . isn't ".vertically-divided" . child ".row" . child ".column" . is ":first-child" .> do
-                "-webkit-box-shadow" =: none
-                "box-shadow" =: none
-            is ".inverted" . is ".divided" . is ".vertically" . child ".row" . is ":before" .> do
-                "-webkit-box-shadow" =: pxs 0 <<>> neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> rgba(255,255,255,0.1)
-                "box-shadow" =: pxs 0 <<>> neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> rgba(255,255,255,0.1)
-            is ".relaxed" . is ".divided" . is ".vertically" . child ".row" . is ":before" .> do
-                marginLeft =: rems 1.5
-                marginRight =: rems 1.5
-                Styles.width =: "calc(" <> per 100 <> " - " <> rems 3 <> ")"
-            is ".relaxed" . is ".very" . is ".divided" . is ".vertically" . child ".row" . is ":before" .> do
-                marginLeft =: rems 5
-                marginRight =: rems 5
-                Styles.width =: "calc(" <> per 100 <> " - " <> rems 5 <> ")" -- is this right, shoud it not be rems 10?
-            is ".celled" .> do
-                Styles.width =: per 100
-                margin =: ems 1 <<>> ems 0
-                "-webkit-box-shadow" =: pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> pxs 1 <<>> "#D4D4D5"
-                "box-shadow" =: pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> pxs 1 <<>> "#D4D4D5"
-            is ".celled" . child ".row" .> do
-                important $ Styles.width =: per 100
-                margin =: ems 0
-                padding =: ems 0
-                "-webkit-box-shadow" =: pxs 0 <<>> neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> "#D4D4D5"
-                "box-shadow" =: pxs 0 <<>> neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> "#D4D4D5"
-            is ".celled" . child ".column" . isn't ".row" 
-              . or is c . is ".celled" . child ".row" . child ".column" .> do
+            is ".celled" . is ".reversed" . is ".mobile" . child ".row" . child ".column" . is ":first-child" .> do
                 "-webkit-box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> "#D4D4D5"
                 "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> "#D4D4D5"
-            is ".celled" . child ".column" . is ":first-child"
-              . or is c . is ".celled" . child ".row" . child ".column" . is ":first-child" .> do
+            is ".celled" . is ".reversed" . is ".mobile" . child ".row" . child ".column" . is ":last-child" .> do
                 "-webkit-box-shadow" =: none
                 "box-shadow" =: none
-            is ".celled" . child ".column" . isn't ".row"
-              . or is c . is ".celled" . child ".row" . child ".column" .> 
-                padding =: ems 1
-            is ".relaxed" . is ".celled" . child ".column" . isn't ".row"
-              . or is c . is ".relaxed" . is ".celled" . child ".row" . child ".column" .>
-                padding =: ems 1.5
-            is ".relaxed" . is ".very" . is ".celled" . child ".column" . isn't ".row"
-              . or is c . is ".relaxed" . is ".very" . is ".celled" . child ".row" . child ".column" .>
-                padding =: ems 2
-            is ".celled" . is ".internally" .> do
-                "-webkit-box-shadow" =: none
-                "box-shadow" =: none
+            child ".row" . is ".doubling" . or is c . is ".doubling" . child ".row" .> do
+                important $ margin =: ems 0
+                important $ padding =: ems 0
+            child ".row"  . is ".doubling" .child ".column" 
+                . or is c . is ".doubling" . child ".row" . child ".column" .> do
+                important $ paddingTop =: rems 1
+                important $ paddingBottom =: rems 1
+                important $ "-webkit-box-shadow" =: none
+                important $ "box-shadow" =: none
+                important $ margin =: ems 0
+            for_ (zip [1,2,2,2,2,2,2,3,3,3,3,3,4,4,4] cs) $ \(n,sz) -> do
+                is ".column" . is ".doubling" . is sz . child ".row" . child ".column" 
+                    . or is c . is ".column" . is ".doubling" . is sz . child ".column" . isn't ".row"
+                    . or is c . is ".row" . is ".row" . is ".column" . is ".doubling" . is sz . child ".column" .> do
+                    important $ width =: (1 / n)
+            is ".stackable" .> do
+                width =: auto
+                important $ marginLeft =: ems 0
+                important $ marginRight =: ems 0
+            is ".stackable" . child ".row" . child ".column" . is ".wide"
+                . or is c . is ".stackable" . is ".column" . is ".wide"
+                . or is c . is ".stackable" . is c . is ".column" . child ".column"
+                . or is c . is ".stackable" . child ".column" . is ".row" . child ".column"
+                . or is c . is ".stackable" . child ".row" . child ".column"
+                . or is c . is ".stackable" . child ".column" . isn't ".row"
+                . or is c . child ".row" . is ".stackable" . is ".stackable" . child ".column" .> do
+                important $ width =: per 100
+                important $ margin =: ems 0 <<>> ems 0
+                important $ "-webkit-box-shadow" =: none
+                important $ "box-shadow" =: none
+                important $ padding =: rems 1 <<>> rems 1
+            is ".stackable" . isn't ".vertically" . child ".row" .> do
                 margin =: ems 0
-            is ".celled" . is ".internally" . child ".row" . is ":first-child" 
-              . or is c . is ".celled" . is ".internally" . child ".row" . child ".column" . is ":first-child" .> do
+                padding =: ems 0
+            has c . is ".stackable" .> do
+                important $ marginLeft =: neg (rems 1)
+                important $ marginRight =: neg (rems 1)
+            is ".stackable" . is ".divided" . child ".row" . is ":first-child" . child ".column" . is ":first-child"
+                . or is c . is ".stackable" . is ".celled" . child ".row" . is ":first-child" . child ".column" . is ":first-child"
+                . or is c . is ".stackable" . is ".divided" . child ".column" . isn't ".row" . is ":first-child"
+                . or is c . is ".stackable" . is ".celled" . child ".column" . isn't ".row" .is ":first-child" .>
+                important $ borderTop =: none
+            is ".stackable" . is ".celled" . is ".inverted" . child ".column" . isn't ".row"
+                . or is c . is ".stackable" . is ".divided" . is ".inverted" . child ".column" . isn't ".row"
+                . or is c . is ".stackable" . is ".celled" . is ".inverted" . child ".row" . child ".column"
+                . or is c . is ".stackable" . is ".divided" . is ".inverted" . child ".row" . child ".column" .>
+                important $ borderTop =: pxs 1 <<>> solid <<>> rgba(255,255,255,0.1)
+            is ".stackable" . is ".celled" . child ".column" . isn't ".row"
+                . or is c . is ".stackable" . is ".divided" . isn't ".vertically" . isn't ".vertically-divided". child ".column" . isn't ".row"
+                . or is c . is ".stackable" . is ".celled" . child ".row" . child ".column"
+                . or is c . is ".stackable" . is ".divided" . isn't ".vertically"  isn't ".vertically-divided" . child ".row" . child ".column" .> do
+                borderTop =: pxs 1 <<>> solid <<>> rgba(34,36,38,0.15)
+                important $ "-webkit-box-shadow" =: none
+                important $ "box-shadow" =: none
+                important $ paddingTop =: rems 2
+                important $ paddingBottom =: rems 2
+            is ".stackable" . is ".celled" . child ".row" .> do
+                important $ "-webkit-box-shadow" =: none
+                important $ "-box-shadow" =: none
+            is ".stackable" . is ".divided" . 
+
+
+        atMedia "only screen and (min-width: 768px) and (max-width: 991px)" $ do
+            is ".reversed" . is ".tablet"
+                . or is c . is ".reversed" . is ".tablet" . child ".row"
+                . or is c . child ".row" . is ".reversed" . is ".tablet" .> do
+                "-webkit-box-orient" =: "horizontal"
+                "-webkit-box-direction" =: "reverse"
+                "-ms-flex-direction" =: "row-reverse"
+                "flex-direction" =: "row-reverse"
+            is ".reversed" . is ".vertically" . is ".tablet"
+                . or is c . is ".stackable" .  is ".reversed" . is ".tablet" .> do
+                "-webkit-box-orient" =: "vertical"
+                "-webkit-box-direction" =: "reverse"
+                "-ms-flex-direction" =: "column-reverse"
+                "flex-direction" =: "column-reverse"
+            is ".reversed" . is ".tablet" . is ".divided" . isn't ".vertically-divided" . child ".column" . is ":first-child"
+                . or is c . is ".reversed" . is ".tablet" . isn't ".vertically-divided" . child ".row" . child ".column" . is ":first-child" .> do
+                "-webkit-box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
+                "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,35,38,0.15)
+            is ".reversed" . is ".tablet" . is ".divided" . isn't ".vertically-divided" . child ".column" . is ":last-child"
+                . or is c . is ".reversed" . is ".tablet" . isn't ".vertically-divided" . child ".row" . child ".column" . is ":last-child" .> do
                 "-webkit-box-shadow" =: none
                 "box-shadow" =: none
-            is ".aligned" . is ".top" . child ".column" . isn't ".row"
-              . or is c . is ".aligned" . is ".top" . child ".row" . child ".column"
-              . or is c . child ".aligned" . is ".top" . is ".row" . child ".column"
-              . or is c . child ".aligned" . is ".top" . is ".column" . isn't ".row"
-              . or is c . child ".row" . child ".aligned"  . is ".top" . is ".column" .> do
-                "-webkit-box-orient" =: vertical
-                "-webkit-box-direction" =: normal
-                "-ms-flex-direction" =: column
-                "flex-direction" =: column
-                "vertical-align" =: top
-                important $ "-ms-flex-item-align" =: start
-                important $ "align-self" =: "flex-start"
-            is ".aligned" . is ".middle" . child ".column" . isn't ".row"
-              . or is c . is ".aligned" . is ".middle" . child ".row" . child ".column"
-              . or is c . child ".aligned" . is ".middle" . is ".row" . child ".column"
-              . or is c . child ".aligned" . is ".middle" . is ".column" . isn't ".row"
-              . or is c . child ".row" . child ".aligned"  . is ".middle" . is ".column" .> do
-                "-webkit-box-orient" =: vertical
-                "-webkit-box-direction" =: normal
-                "-ms-flex-direction" =: column
-                "flex-direction" =: column
-                "vertical-align" =: middle
-                important $ "-ms-flex-item-align" =: center
-                important $ "align-self" =: center
-            is ".aligned" . is ".bottom" . child ".column" . isn't ".row"
-              . or is c . is ".aligned" . is ".bottom" . child ".row" . child ".column"
-              . or is c . child ".aligned" . is ".bottom" . is ".row" . child ".column"
-              . or is c . child ".aligned" . is ".bottom" . is ".column" . isn't ".row"
-              . or is c . child ".row" . child ".aligned"  . is ".bottom" . is ".column" .> do
-                "-webkit-box-orient" =: vertical
-                "-webkit-box-direction" =: normal
-                "-ms-flex-direction" =: column
-                "flex-direction" =: column
-                "vertical-align" =: bottom
-                important $ "-ms-flex-item-align" =: end
-                important $ "align-self" =: "flex-end"           
-            is ".stretched" . child ".row" . child ".column"
-              . or is c . is ".stretched" . child ".column"
-              . or is c . child ".row" . is ".stretched" . child ".column"
-              . or is c . child ".column" . is ".stretched" . isn't ".row"
-              . or is c . child ".row" . child ".column" . is ".stretched" .> do
-                important $ display =: "-webkit-inline-box"
-                important $ display =: "-ms-inline-flexbox"
-                important $ display =: "inline-flex"
-                "-ms-flex-item-align" =: "stretch"
-                "align-self" =: "stretch"
-                "-webkit-box-orient" =: vertical
-                "-webkit-box-direction" =: normal
-                "-ms-flex-direction" =: column
-                "flex-direction" =: column
-            is ".stretched" . child ".row" . child ".column" . child "*"
-              . or is c . is ".stretched" . child ".column" . child "*"
-              . or is c . child ".row" . is ".stretched" . child ".column" . child "*"
-              . or is c . child ".column" . is ".stretched" . isn't ".row"
-              . or is c . child ".row" . child ".column" . is ".stretched" . child "*" .> do
-                "-webkit-box-flex" =: one
-                "-ms-flex-positive" =: one
-                "flex-grow" =: one
-            is ".aligned" . is ".left" . child ".column"
-              . or is c . is ".aligned" . is ".left" . child ".row" . child ".column"
-              . or is c . child ".aligned" . is ".left" . is ".row" . child ".column"
-              . or is c . child ".aligned" . is ".left" . is ".column" . is ".column"
-              . or is c . child ".row" . child ".column"  . is ".column" . is ".aligned" . is ".left" .> do
-                "text-align" =: left
-                "-ms-flex-item-align" =: inherit
-                "align-self" =: inherit
-            is ".aligned" . is ".center" . child ".column"
-              . or is c . is ".aligned" . is ".center" . child ".row" . child ".column"
-              . or is c . child ".aligned" . is ".center" . is ".row" . child ".column"
-              . or is c . child ".aligned" . is ".center" . is ".column" . is ".column"
-              . or is c . child ".row" . child ".column"  . is ".column" . is ".aligned" . is ".center" .> do
-                "text-align" =: center
-                "-ms-flex-item-align" =: inherit
-                "align-self" =: inherit
-            is ".aligned" . is ".center" .> do
-                "-webkit-box-pack" =: center
-                "-ms-flex-pack" =: center
-                "justify-content" =: center
-            is ".aligned" . is ".right" . child ".column"
-              . or is c . is ".aligned" . is ".right" . child ".row" . child ".column"
-              . or is c . child ".aligned" . is ".right" . is ".row" . child ".column"
-              . or is c . child ".aligned" . is ".right" . is ".column" . is ".column"
-              . or is c . child ".row" . child ".column"  . is ".column" . is ".aligned" . is ".right" .> do
-                "text-align" =: right
-                "-ms-flex-item-align" =: inherit
-                "align-self" =: inherit
-            is ".justified" . child ".column"
-              . or is c . is ".justified" . child ".row" . child ".column"
-              . or is c . child ".row" . is ".justified" . child ".column"
-              . or is c . child ".column" . is ".column" . is ".justified"
-              . or is c . child ".row" . child ".column" . is ".column" . is ".justified" .> do
-                "text-align" =: "justify"
-                "-webkit-hyphens" =: auto
-                "-ms-hyphens" =: auto
-                "hyphens" =: auto
-            is ".width" . is ".equal" . child ".column" . isn't ".row"
-              . or is c . is ".width" . is ".equal" . child ".row" . child ".column"
-              . or is c . child ".row" . is ".width" . is ".equal" . child ".column" .> do
-                display =: inlineBlock
-                "-webkit-box-flex" =: one
-                "-ms-flex-positive" =: one
-                "flex-grow" =: one
-            is ".width" . is ".equal" . child ".column" . is ".wide"
-              . or is c . is ".width" . is ".equal" . child ".row" . child ".column" . is ".wide"
-              . or is c . child ".row" . is ".width" . is ".equal" . child ".column" . is ".wide" .> do
-                "-webkit-box-flex" =: zero
-                "-ms-flex-positive" =: zero
-                "flex-grow" =: zero
-            atMedia "only screen and (max-width: 767px)" $ do
-                is ".reversed" . is ".mobile"
-                  . or is c . is ".reversed" . is ".mobile" . child ".row"
-                  . or is c . child ".row" . is ".reversed" . is ".mobile" .> do
-                    "-webkit-box-orient" =: "horizontal"
-                    "-webkit-box-direction" =: "reverse"
-                    "-ms-flex-direction" =: "row-reverse"
-                    "flex-direction" =: "row-reverse"
-                is ".reversed" . is ".vertically" . is ".mobile"
-                  . or is c . is ".stackable" .  is ".reversed" . is ".mobile" .> do
-                    "-webkit-box-orient" =: "vertical"
-                    "-webkit-box-direction" =: "reverse"
-                    "-ms-flex-direction" =: "column-reverse"
-                    "flex-direction" =: "column-reverse"
-                is ".reversed" . is ".mobile" . is ".divided" . isn't ".vertically-divided" . child ".column" . is ":first-child"
-                  . or is c . is ".reversed" . is ".mobile" . isn't ".vertically-divided" . child ".row" . child ".column" . is ":first-child" .> do
-                    "-webkit-box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
-                    "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,35,38,0.15)
-                is ".reversed" . is ".mobile" . is ".divided" . isn't ".vertically-divided" . child ".column" . is ":last-child"
-                  . or is c . is ".reversed" . is ".mobile" . isn't ".vertically-divided" . child ".row" . child ".column" . is ":last-child" .> do
-                    "-webkit-box-shadow" =: none
-                    "box-shadow" =: none
-                is ".reversed" . is ".vertically" . is ".mobile" . is ".divided" . is ".vertically-divided" . child ".column" . is ":first-child"
-                  . or is c . is ".reversed" . is ".vertically" . is ".mobile" . is ".vertically-divided" . child ".row" . child ".column" . is ":first-child" .> do
-                    "-webkit-box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
-                    "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,35,38,0.15)
-                is ".reversed" . is ".vertically" . is ".mobile" . is ".divided" . is ".vertically-divided" . child ".column" . is ":last-child"
-                  . or is c . is ".reversed" . is ".vertically" . is ".mobile" . is ".vertically-divided" . child ".row" . child ".column" . is ":last-child" .> do
-                    "-webkit-box-shadow" =: none
-                    "box-shadow" =: none
-                is ".celled" . is ".reversed" . is ".mobile" . child ".row" . child ".column" . is ":first-child" .> do
-                    "-webkit-box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> "#D4D4D5"
-                    "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> "#D4D4D5"
-                is ".celled" . is ".reversed" . is ".mobile" . child ".row" . child ".column" . is ":last-child" .> do
-                    "-webkit-box-shadow" =: none
-                    "box-shadow" =: none
-                child ".row" . is ".doubling" . or is c . is ".doubling" . child ".row" .> do
-                    important $ margin =: ems 0
-                    important $ padding =: ems 0
-                child ".row"  . is ".doubling" .child ".column" 
-                  . or is c . is ".doubling" . child ".row" . child ".column" .> do
-                    important $ paddingTop =: rems 1
-                    important $ paddingBottom =: rems 1
-                    important $ "-webkit-box-shadow" =: none
-                    important $ "box-shadow" =: none
-                    important $ margin =: ems 0
-                for_ (zip [1,2,2,2,2,2,2,3,3,3,3,3,4,4,4] cs) $ \(n,sz) -> do
-                    is ".column" . is ".doubling" . is sz . child ".row" . child ".column" 
-                      . or is c . is ".column" . is ".doubling" . is sz . child ".column" . isn't ".row"
-                      . or is c . is ".row" . is ".row" . is ".column" . is ".doubling" . is sz . child ".column" .> do
-                        important $ width =: (1 / n)
-                is ".stackable" .> do
-                    width =: auto
-                    important $ marginLeft =: ems 0
-                    important $ marginRight =: ems 0
-                is ".stackable" . child ".row" . child ".column" . is ".wide"
-                  . or is c . is ".stackable" . is ".column" . is ".wide"
-                  . or is c . is ".stackable" . is c . is ".column" . child ".column"
-                  . or is c . is ".stackable" . child ".column" . is ".row" . child ".column"
-                  . or is c . is ".stackable" . child ".row" . child ".column"
-                  . or is c . is ".stackable" . child ".column" . isn't ".row"
-                  . or is c . child ".row" . is ".stackable" . is ".stackable" . child ".column" .> do
-                    important $ width =: per 100
-                    important $ margin =: ems 0 <<>> ems 0
-                    important $ "-webkit-box-shadow" =: none
-                    important $ "box-shadow" =: none
-                    important $ padding =: rems 1 <<>> rems 1
-                is ".stackable" . isn't ".vertically" . child ".row" .> do
-                    margin =: ems 0
-                    padding =: ems 0
-                has c . is ".stackable" .> do
-                    important $ marginLeft =: neg (rems 1)
-                    important $ marginRight =: neg (rems 1)
-                is ".stackable" . is ".divided" . child ".row" . is ":first-child" . child ".column" . is ":first-child"
-                  . or is c . is ".stackable" . is ".celled" . child ".row" . is ":first-child" . child ".column" . is ":first-child"
-                  . or is c . is ".stackable" . is ".divided" . child ".column" . isn't ".row" . is ":first-child"
-                  . or is c . is ".stackable" . is ".celled" . child ".column" . isn't ".row" .is ":first-child" .>
-                    important $ borderTop =: none
-                is ".stackable" . is ".celled" . is ".inverted" . child ".column" . isn't ".row"
-                  . or is c . is ".stackable" . is ".divided" . is ".inverted" . child ".column" . isn't ".row"
-                  . or is c . is ".stackable" . is ".celled" . is ".inverted" . child ".row" . child ".column"
-                  . or is c . is ".stackable" . is ".divided" . is ".inverted" . child ".row" . child ".column" .>
-                    important $ borderTop =: pxs 1 <<>> solid <<>> rgba(255,255,255,0.1)
-                is ".stackable" . is ".celled" . child ".column" . isn't ".row"
-                  . or is c . is ".stackable" . is ".divided" . isn't ".vertically" . isn't ".vertically-divided". child ".column" . isn't ".row"
-                  . or is c . is ".stackable" . is ".celled" . child ".row" . child ".column"
-                  . or is c . is ".stackable" . is ".divided" . isn't ".vertically"  isn't ".vertically-divided" . child ".row" . child ".column" .> do
-                    borderTop =: pxs 1 <<>> solid <<>> rgba(34,36,38,0.15)
-                    important $ "-webkit-box-shadow" =: none
-                    important $ "box-shadow" =: none
-                    important $ paddingTop =: rems 2
-                    important $ paddingBottom =: rems 2
-                is ".stackable" . is ".celled" . child ".row" .> do
-                    important $ "-webkit-box-shadow" =: none
-                    important $ "-box-shadow" =: none
-                is ".stackable" . is ".divided" . 
-
-
-            atMedia "only screen and (min-width: 768px) and (max-width: 991px)" $ do
-                is ".reversed" . is ".tablet"
-                  . or is c . is ".reversed" . is ".tablet" . child ".row"
-                  . or is c . child ".row" . is ".reversed" . is ".tablet" .> do
-                    "-webkit-box-orient" =: "horizontal"
-                    "-webkit-box-direction" =: "reverse"
-                    "-ms-flex-direction" =: "row-reverse"
-                    "flex-direction" =: "row-reverse"
-                is ".reversed" . is ".vertically" . is ".tablet"
-                  . or is c . is ".stackable" .  is ".reversed" . is ".tablet" .> do
-                    "-webkit-box-orient" =: "vertical"
-                    "-webkit-box-direction" =: "reverse"
-                    "-ms-flex-direction" =: "column-reverse"
-                    "flex-direction" =: "column-reverse"
-                is ".reversed" . is ".tablet" . is ".divided" . isn't ".vertically-divided" . child ".column" . is ":first-child"
-                  . or is c . is ".reversed" . is ".tablet" . isn't ".vertically-divided" . child ".row" . child ".column" . is ":first-child" .> do
-                    "-webkit-box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
-                    "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,35,38,0.15)
-                is ".reversed" . is ".tablet" . is ".divided" . isn't ".vertically-divided" . child ".column" . is ":last-child"
-                  . or is c . is ".reversed" . is ".tablet" . isn't ".vertically-divided" . child ".row" . child ".column" . is ":last-child" .> do
-                    "-webkit-box-shadow" =: none
-                    "box-shadow" =: none
-                is ".celled" . is ".reversed" . is ".tablet" . child ".row" . child ".column" . is ":first-child" .> do
-                    "-webkit-box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> "#D4D4D5"
-                    "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> "#D4D4D5"
-                is ".celled" . is ".reversed" . is ".tablet" . child ".row" . child ".column" . is ":last-child" .> do
-                    "-webkit-box-shadow" =: none
-                    "box-shadow" =: none
-                is ".doubling" .> 
-                    width =: auto
-                child ".row" . is ".doubling" . or is c . is ".doubling" . child ".row" .> do
-                    important $ margin =: ems 0
-                    important $ padding =: ems 0
-                child ".row"  . is ".doubling" .child ".column" 
-                  . or is c . is ".doubling" . child ".row" . child ".column" .>
-                    important $ display =: inlineBlock
-                    important $ paddingTop =: rems 1
-                    important $ paddingBottom =: rems 1
-                    important $ "-webkit-box-shadow" =: none
-                    important $ "box-shadow" =: none
-                    margin =: ems 0
-                for_ (zip [1,2,2,3,3,3,4,4,5,5,6,6,7,7,8] cs) $ \(n,sz) -> do
-                    is ".column" . is ".doubling" . is sz . child ".row" . child ".column" 
-                      . or is c . is ".column" . is ".doubling" . is sz . child ".column" . isn't ".row"
-                      . or is c . is ".row" . is ".row" . is ".column" . is ".doubling" . is sz . child ".column" .> do
-                        important $ width =: (1 / n)
-            atMedia "only screen and (min-width: 992px)" $ do
-                is ".reversed" . is ".computer"
-                  . or is c . is ".reversed" . is ".computer" . child ".row"
-                  . or is c . child ".row" . is ".reversed" . is ".computer" .> do
-                    "-webkit-box-orient" =: "horizontal"
-                    "-webkit-box-direction" =: "reverse"
-                    "-ms-flex-direction" =: "row-reverse"
-                    "flex-direction" =: "row-reverse"
-                is ".reversed" . is ".vertically" . is ".computer"
-                  . or is c . is ".stackable" .  is ".reversed" . is ".computer" .> do
-                    "-webkit-box-orient" =: "vertical"
-                    "-webkit-box-direction" =: "reverse"
-                    "-ms-flex-direction" =: "column-reverse"
-                    "flex-direction" =: "column-reverse"
-                is ".reversed" . is ".computer" . is ".divided" . isn't ".vertically-divided" . child ".column" . is ":first-child"
-                  . or is c . is ".reversed" . is ".computer" . isn't ".vertically-divided" . child ".row" . child ".column" . is ":first-child" .> do
-                    "-webkit-box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
-                    "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,35,38,0.15)
-                is ".reversed" . is ".computer" . is ".divided" . isn't ".vertically-divided" . child ".column" . is ":last-child"
-                  . or is c . is ".reversed" . is ".computer" . isn't ".vertically-divided" . child ".row" . child ".column" . is ":last-child" .> do
-                    "-webkit-box-shadow" =: none
-                    "box-shadow" =: none
-                is ".celled" . is ".reversed" . is ".computer" . child ".row" . child ".column" . is ":first-child" .> do
-                    "-webkit-box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> "#D4D4D5"
-                    "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> "#D4D4D5"
-                is ".celled" . is ".reversed" . is ".computer" . child ".row" . child ".column" . is ":last-child" .> do
-                    "-webkit-box-shadow" =: none
-                    "box-shadow" =: none
+            is ".celled" . is ".reversed" . is ".tablet" . child ".row" . child ".column" . is ":first-child" .> do
+                "-webkit-box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> "#D4D4D5"
+                "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> "#D4D4D5"
+            is ".celled" . is ".reversed" . is ".tablet" . child ".row" . child ".column" . is ":last-child" .> do
+                "-webkit-box-shadow" =: none
+                "box-shadow" =: none
+            is ".doubling" .> 
+                width =: auto
+            child ".row" . is ".doubling" . or is c . is ".doubling" . child ".row" .> do
+                important $ margin =: ems 0
+                important $ padding =: ems 0
+            child ".row"  . is ".doubling" .child ".column" 
+                . or is c . is ".doubling" . child ".row" . child ".column" .>
+                important $ display =: inlineBlock
+                important $ paddingTop =: rems 1
+                important $ paddingBottom =: rems 1
+                important $ "-webkit-box-shadow" =: none
+                important $ "box-shadow" =: none
+                margin =: ems 0
+            for_ (zip [1,2,2,3,3,3,4,4,5,5,6,6,7,7,8] cs) $ \(n,sz) -> do
+                is ".column" . is ".doubling" . is sz . child ".row" . child ".column" 
+                    . or is c . is ".column" . is ".doubling" . is sz . child ".column" . isn't ".row"
+                    . or is c . is ".row" . is ".row" . is ".column" . is ".doubling" . is sz . child ".column" .> do
+                    important $ width =: (1 / n)
+        atMedia "only screen and (min-width: 992px)" $ do
+            is ".reversed" . is ".computer"
+                . or is c . is ".reversed" . is ".computer" . child ".row"
+                . or is c . child ".row" . is ".reversed" . is ".computer" .> do
+                "-webkit-box-orient" =: "horizontal"
+                "-webkit-box-direction" =: "reverse"
+                "-ms-flex-direction" =: "row-reverse"
+                "flex-direction" =: "row-reverse"
+            is ".reversed" . is ".vertically" . is ".computer"
+                . or is c . is ".stackable" .  is ".reversed" . is ".computer" .> do
+                "-webkit-box-orient" =: "vertical"
+                "-webkit-box-direction" =: "reverse"
+                "-ms-flex-direction" =: "column-reverse"
+                "flex-direction" =: "column-reverse"
+            is ".reversed" . is ".computer" . is ".divided" . isn't ".vertically-divided" . child ".column" . is ":first-child"
+                . or is c . is ".reversed" . is ".computer" . isn't ".vertically-divided" . child ".row" . child ".column" . is ":first-child" .> do
+                "-webkit-box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
+                "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,35,38,0.15)
+            is ".reversed" . is ".computer" . is ".divided" . isn't ".vertically-divided" . child ".column" . is ":last-child"
+                . or is c . is ".reversed" . is ".computer" . isn't ".vertically-divided" . child ".row" . child ".column" . is ":last-child" .> do
+                "-webkit-box-shadow" =: none
+                "box-shadow" =: none
+            is ".celled" . is ".reversed" . is ".computer" . child ".row" . child ".column" . is ":first-child" .> do
+                "-webkit-box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> "#D4D4D5"
+                "box-shadow" =: neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> "#D4D4D5"
+            is ".celled" . is ".reversed" . is ".computer" . child ".row" . child ".column" . is ":last-child" .> do
+                "-webkit-box-shadow" =: none
+                "box-shadow" =: none
         )
-            
-            
-                
 
 data Grid = Grid_
     { as :: Features -> [View] -> View
     , features :: Features
     , children :: [View]
-    , celled :: Maybe Txt
+    , celled :: Celled
     , centered :: Bool
     , columns :: Txt
     , container :: Bool
-    , divided :: Maybe Direction
+    , divided :: Direction
     , doubling :: Bool
     , inverted :: Bool
-    , padded :: Maybe Direction
-    , relaxed :: Maybe Relaxed
-    , reversed :: Maybe Direction
+    , padded :: Direction
+    , relaxed :: Relaxed
+    , reversed :: Direction
     , stackable :: Bool
     , stretched :: Bool
     , textAlign :: Txt
@@ -742,11 +782,11 @@ instance Pure Grid where
                 , inverted # "inverted"
                 , stackable # "stackable"
                 , stretched # "stretched"
-                , maybe "" (<>> "celled") celled
-                , maybe "" (<> "-divided") divided
-                , maybe "" (<>> "padded") padded
-                , maybe "" (<>> "relaxed") relaxed
-                , multiProp reversed "reversed"
+                , directionClass divided  "divided"
+                , directionClass padded   "padded"
+                , directionClass reversed "reversed"
+                , celledClass celled
+                , relaxedClass relaxed
                 , textAlign
                 , verticalAlign
                 , widthProp columns "column" True
@@ -964,7 +1004,7 @@ data Row = Row_
     , columns :: Txt
     , divided :: Bool
     , only :: [Txt]
-    , reversed :: [Txt]
+    , reversed :: Maybe Reversed
     , stretched :: Bool
     , textAlign :: Txt
     , verticalAlign :: Txt
@@ -985,7 +1025,7 @@ instance Pure Row where
                 , divided # "divided"
                 , stretched # "stretched"
                 , multiProp only "only"
-                , multiProp reversed "reversed"
+                , maybe "" (<>> "reversed") reversed
                 , textAlign
                 , verticalAlign
                 , widthProp columns "columns" True
