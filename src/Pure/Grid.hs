@@ -90,18 +90,18 @@ celledClass NonCelled  = ""
 data TextAlignment = NoTextAlign | LeftAlign | RightAlign | CenterAligned | Justified
   deriving (Eq,Ord,Generic,Default)
 textAlignmentClass :: TextAlignment -> Txt
-textAlignmentClass LeftAlign = "left aligned"
-textAlignmentClass RightAlign = "right aligned"
-textAlignmentClass CenterAligned = "centered"
+textAlignmentClass LeftAlign = "aligned left-aligned"
+textAlignmentClass RightAlign = "aligned right-aligned"
+textAlignmentClass CenterAligned = "aligned center-aligned"
 textAlignmentClass Justified = "justified"
 textAlignmentClass NoTextAlign = ""
 
 data VerticalAlignment = NoVerticalAlign | TopAlign | BottomAlign | MiddleAlign
   deriving (Eq,Ord,Generic,Default)
 verticalAlignmentClass :: VerticalAlignment -> Txt
-verticalAlignmentClass TopAlign = "top aligned"
-verticalAlignmentClass BottomAlign = "bottom aligned"
-verticalAlignmentClass MiddleAlign = "middle aligned"
+verticalAlignmentClass TopAlign = "aligned top-aligned"
+verticalAlignmentClass BottomAlign = "aligned bottom-aligned"
+verticalAlignmentClass MiddleAlign = "aligned middle-aligned"
 verticalAlignmentClass NoVerticalAlign = ""
 
 data Floated = NoFloat | LeftFloat | RightFloat
