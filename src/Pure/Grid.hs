@@ -1,12 +1,12 @@
 {-# LANGUAGE OverloadedStrings, PatternSynonyms, DuplicateRecordFields, RecordWildCards, ViewPatterns, MultiParamTypeClasses, TypeFamilies, DeriveGeneric, TemplateHaskell, DeriveAnyClass #-}
 module Pure.Grid where
 
-import Pure hiding (color,textAlign,verticalAlign,width,Color_)
+import Pure hiding (textAlign,verticalAlign,width)
 
 import Pure.Data.CSS
 
 import qualified Pure.Data.Styles as Styles
-import Pure.Data.Styles hiding (width,textAlign,verticalAlign,color)
+import Pure.Data.Styles hiding (width,textAlign,verticalAlign)
 
 import Pure.Data.Cond
 
@@ -34,14 +34,10 @@ widthProp val widthClass canEqual
     | canEqual && val == "equal" = "equal width"
     | otherwise = toTxt val <>> widthClass
 
-multiProp :: [Txt] -> Txt -> Txt
-multiProp val key
-    | Prelude.null val = def
-    | otherwise =
-          Txt.unwords
-        . Txt.words
-        . Txt.unwords
-        $ val
+onlyProp :: [Device] -> Txt
+onlyProp xs
+    | Prelude.null xs = def
+    | otherwise = Txt.unwords ("only" : fmap deviceClass xs)
 
 (<>>) x y =
   case (Txt.null x, Txt.null y) of
@@ -91,12 +87,12 @@ celledClass Internally = "interally-celled celled"
 celledClass Outlined   = "celled"  
 celledClass NonCelled  = ""
 
-data TextAlignment = NoTextAlign | LeftAlign | RightAlign | CenterAlign | Justify
+data TextAlignment = NoTextAlign | LeftAlign | RightAlign | CenterAligned | Justify
   deriving (Eq,Ord,Generic,Default)
 textAlignmentClass :: TextAlignment -> Txt
 textAlignmentClass LeftAlign = "left aligned"
 textAlignmentClass RightAlign = "right aligned"
-textAlignmentClass CenterAlign = "center aligned"
+textAlignmentClass CenterAligned = "centered"
 textAlignmentClass Justify = "justify"
 textAlignmentClass NoTextAlign = ""
 
@@ -194,11 +190,6 @@ data VerticalAlign = VerticalAlign_
 pattern VerticalAlign :: HasProp VerticalAlign a => Prop VerticalAlign a -> a -> a
 pattern VerticalAlign p a <- (getProp VerticalAlign_ &&& id -> (p,a)) where
     VerticalAlign p a = setProp VerticalAlign_ p a
-
-data Color = Color_
-pattern Color :: HasProp Color a => Prop Color a -> a -> a
-pattern Color p a <- (getProp Color_ &&& id -> (p,a)) where
-    Color p a = setProp Color_ p a
 
 data Floated_ = Floated_
 pattern Floated :: HasProp Floated_ a => Prop Floated_ a -> a -> a
@@ -400,12 +391,11 @@ data Column = Column_
     { as :: Features -> [View] -> View
     , features :: Features
     , children :: [View]
-    , color :: Txt
     , computer :: Txt
-    , floated :: Txt
+    , floated :: Floated
     , largeScreen :: Txt
     , mobile :: Txt
-    , only :: [Txt]
+    , only :: [Device]
     , stretched :: Bool
     , tablet :: Txt
     , textAlign :: TextAlignment
@@ -424,11 +414,10 @@ instance Pure Column where
     view Column_ {..} =
         let
             cs =
-                [ color
-                , stretched # "stretched"
-                , multiProp only "only"
+                [ stretched # "stretched"
+                , onlyProp only
                 , textAlignmentClass textAlign
-                , (floated /= mempty) # (floated <>> "floated")
+                , floatedClass floated
                 , verticalAlignmentClass verticalAlign
                 , widthProp computer "wide computer" def
                 , widthProp largeScreen "wide large-screen" def
@@ -453,18 +442,13 @@ instance HasChildren Column where
     getChildren = children
     setChildren cs gc = gc { children = cs }
 
-instance HasProp Color Column where
-    type Prop Color Column = Txt
-    getProp _ = color
-    setProp _ c gc = gc { color = c }
-
 instance HasProp OnComputer Column where
     type Prop OnComputer Column = Txt
     getProp _ = computer
     setProp _ c gc = gc { computer = c }
 
-instance HasProp Floated Column where
-    type Prop Floated Column = Txt
+instance HasProp Floated_ Column where
+    type Prop Floated_ Column = Floated
     getProp _ = floated
     setProp _ f gc = gc { floated = f }
 
@@ -479,7 +463,7 @@ instance HasProp OnMobile Column where
     setProp _ m gc = gc { mobile = m }
 
 instance HasProp Only Column where
-    type Prop Only Column = [Txt]
+    type Prop Only Column = [Device]
     getProp _ = only
     setProp _ o gc = gc { only = o }
 
@@ -518,14 +502,13 @@ data Row = Row_
     , features :: Features
     , children :: [View]
     , centered :: Bool
-    , color :: Txt
     , columns :: Txt
     , divided :: Bool
-    , only :: [Txt]
+    , only :: [Device]
     , reversed :: Reverse
     , stretched :: Bool
-    , textAlign :: Txt
-    , verticalAlign :: Txt
+    , textAlign :: TextAlignment
+    , verticalAlign :: VerticalAlignment
     } deriving (Generic)
 
 instance Default Row where
@@ -538,14 +521,13 @@ instance Pure Row where
     view Row_ {..} =
         let
             cs =
-                [ color
-                , centered # "centered"
+                [ centered # "centered"
                 , divided # "divided"
                 , stretched # "stretched"
-                , multiProp only "only"
+                , onlyProp only
                 , reverseClass reversed
-                , textAlign
-                , verticalAlign
+                , textAlignmentClass textAlign
+                , verticalAlignmentClass verticalAlign
                 , widthProp columns "column" True
                 , "row"
                 ]
@@ -565,11 +547,6 @@ instance HasChildren Row where
     getChildren = children
     setChildren cs gr = gr { children = cs }
 
-instance HasProp Color Row where
-    type Prop Color Row = Txt
-    getProp _ = color
-    setProp _ c gr = gr { color = c }
-
 instance HasProp Columns Row where
     type Prop Columns Row = Txt
     getProp _ = columns
@@ -581,7 +558,7 @@ instance HasProp Divided Row where
     setProp _ d gr = gr { divided = d }
 
 instance HasProp Only Row where
-    type Prop Only Row = [Txt]
+    type Prop Only Row = [Device]
     getProp _ = only
     setProp _ o gr = gr { only = o }
 
@@ -596,12 +573,12 @@ instance HasProp Stretched Row where
     setProp _ s gr = gr { stretched = s }
 
 instance HasProp TextAlign Row where
-    type Prop TextAlign Row = Txt
+    type Prop TextAlign Row = TextAlignment
     getProp _ = textAlign
     setProp _ t gr = gr { textAlign = t }
 
 instance HasProp VerticalAlign Row where
-    type Prop VerticalAlign Row = Txt
+    type Prop VerticalAlign Row = VerticalAlignment
     getProp _ = verticalAlign
     setProp _ v gr = gr { verticalAlign = v }
 
