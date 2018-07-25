@@ -87,13 +87,13 @@ celledClass Internally = "interally-celled celled"
 celledClass Outlined   = "celled"  
 celledClass NonCelled  = ""
 
-data TextAlignment = NoTextAlign | LeftAlign | RightAlign | CenterAligned | Justify
+data TextAlignment = NoTextAlign | LeftAlign | RightAlign | CenterAligned | Justified
   deriving (Eq,Ord,Generic,Default)
 textAlignmentClass :: TextAlignment -> Txt
 textAlignmentClass LeftAlign = "left aligned"
 textAlignmentClass RightAlign = "right aligned"
 textAlignmentClass CenterAligned = "centered"
-textAlignmentClass Justify = "justify"
+textAlignmentClass Justified = "justified"
 textAlignmentClass NoTextAlign = ""
 
 data VerticalAlignment = NoVerticalAlign | TopAlign | BottomAlign | MiddleAlign
