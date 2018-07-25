@@ -180,6 +180,11 @@ pattern Stretched :: HasProp Stretched a => Prop Stretched a -> a -> a
 pattern Stretched p a <- (getProp Stretched_ &&& id -> (p,a)) where
     Stretched p a = setProp Stretched_ p a
 
+data Page = Page_
+pattern Page :: HasProp Page a => Prop Page a -> a -> a
+pattern Page p a <- (getProp Page_ &&& id -> (p,a)) where
+    Page p a = setProp Page_ p a
+
 data TextAlign = TextAlign_
 pattern TextAlign :: HasProp TextAlign a => Prop TextAlign a -> a -> a
 pattern TextAlign p a <- (getProp TextAlign_ &&& id -> (p,a)) where
@@ -265,6 +270,7 @@ data Grid = Grid_
     , doubling :: Bool
     , inverted :: Bool
     , padded :: Direction
+    , page :: Bool
     , relaxed :: Relaxed
     , reversed :: Reverse
     , stackable :: Bool
@@ -287,6 +293,7 @@ instance Pure Grid where
                 , container # "container"
                 , doubling # "doubling"
                 , inverted # "inverted"
+                , page # "page"
                 , stackable # "stackable"
                 , stretched # "stretched"
                 , directionClass divided  "divided"
@@ -353,6 +360,11 @@ instance HasProp Padded Grid where
     type Prop Padded Grid = Direction
     getProp _ = padded
     setProp _ p g = g { padded = p }
+
+instance HasProp Page Grid where
+    type Prop Page Grid = Bool
+    getProp _ = page
+    setProp _ p g = g { page = p }
 
 instance HasProp Relaxed_ Grid where
     type Prop Relaxed_ Grid = Relaxed
