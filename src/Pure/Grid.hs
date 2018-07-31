@@ -591,6 +591,16 @@ instance Themeable GridT where
 
         -- STANDARD
 
+        --   https://www.paulirish.com/2012/box-sizing-border-box-ftw/
+        --   https://news.ycombinator.com/item?id=3598500
+        is "html" .> do
+            "box-sizing" =: "border-box"
+            "-webkit-box-sizing" =: "border-box"
+
+        is "*" . or is "*:before" . or is "*:after" .> do
+            "box-sizing" =: "inherit"
+            "-webkit-box-sizing" =: "inherit"
+
         is c .> do
             display =: "-webkit-box"
             display =: "-ms-flexbox"
@@ -605,7 +615,6 @@ instance Themeable GridT where
             "-ms-flex-align" =: stretch
             "align-items" =: stretch
             padding =: ems 0
-            margin =: neg (rems 1)
 
         -- REMOVE GUTTERS
 
@@ -1096,7 +1105,7 @@ instance Themeable GridT where
                 "flex-direction" =: "row-reverse"
 
             is c . is ".reversed" . is ".vertically-reversed" . is ".mobile"
-              . or is c . is ".stackable" . is ".reversed" . is ".mobile" .> do
+              . or is c . is ".stackable" . is ".reversed" . is ".vertically-reversed" . is ".mobile" .> do
                 "-webkit-box-orient" =: "vertical"
                 "-webkit-box-direction" =: "reverse"
                 "-ms-flex-direction" =: "column-reverse"
