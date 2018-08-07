@@ -422,6 +422,7 @@ instance Pure Column where
                 , widthProp computer "wide computer" def
                 , widthProp largeScreen "wide large-screen" def
                 , widthProp mobile "wide mobile" def
+                , widthProp tablet "wide tablet" def
                 , widthProp widescreen "wide widescreen" def
                 , widthProp width "wide" def
                 , "column"
@@ -742,44 +743,46 @@ instance Themeable GridT where
 
         -- PER-DEVICE WIDTH
 
+        let match i dev = is ("[class*=\"" <> Txt.tail i <> " wide " <> dev <> "\"]")
+
         atMedia "only screen and (min-width: 320px) and (max-width: 767px)" $ do
             for_ (zip [1..] cs) $ \(n,i) -> do
-              is c . child ".row" . child ".column" . is i . is ".wide" . is ".mobile" 
-                . or is c . child ".column" . is ".row" . child ".column" . is i . is ".wide" . is ".mobile"
-                . or is c . child ".column" . is i . is ".wide" . is ".mobile"
-                . or is c . is ".column" . child ".column" . is i . is ".wide" . is ".mobile" .> do
+              is c . is c . child ".row" . child ".column" . match i "mobile"
+                . or is c . is c . child ".column" . is ".row" . child ".column" . match i "mobile" 
+                . or is c . is c . child ".column" . match i "mobile"
+                . or is c . is c . is ".column" . child ".column" . match i "mobile" .> do
                   important $ Styles.width =: per (n * 6.25)
  
         atMedia "only screen and (min-width: 768px) and (max-width: 991px)" $ do
             for_ (zip [1..] cs) $ \(n,i) -> do
-              is c . child ".row" . child ".column" . is i . is ".wide" . is ".tablet" 
-                . or is c . child ".column" . is ".row" . child ".column" . is i . is ".wide" . is ".tablet"
-                . or is c . child ".column" . is i . is ".wide" . is ".tablet"
-                . or is c . is ".column" . child ".column" . is i . is ".wide" . is ".tablet" .> do
+              is c . is c . child ".row" . child ".column" . match i "tablet"
+                . or is c . is c . child ".column" . is ".row" . child ".column" . match i "tablet"
+                . or is c . is c . child ".column" . match i "tablet"
+                . or is c . is c . is ".column" . child ".column" . match i "tablet" .> do
                   important $ Styles.width =: per (n * 6.25)
   
         atMedia "only screen and (min-width: 992px)" $ do
             for_ (zip [1..] cs) $ \(n,i) -> do
-              is c . child ".row" . child ".column" . is i . is ".wide" . is ".computer" 
-                . or is c . child ".column" . is ".row" . child ".column" . is i . is ".wide" . is ".computer"
-                . or is c . child ".column" . is i . is ".wide" . is ".computer"
-                . or is c . is ".column" . child ".column" . is i . is ".wide" . is ".computer" .> do
+              is c . is c . child ".row" . child ".column" . match i "computer"
+                . or is c . is c . child ".column" . is ".row" . child ".column" . match i "computer"
+                . or is c . is c . child ".column" . match i "computer"
+                . or is c . is c . is ".column" . child ".column" . match i "computer" .> do
                   important $ Styles.width =: per (n * 6.25)
    
         atMedia "only screen and (min-width: 1200px) and (max-width: 1919px)" $ do
             for_ (zip [1..] cs) $ \(n,i) -> do
-              is c . child ".row" . child ".column" . is i . is ".wide" . is ".large-screen" 
-                . or is c . child ".column" . is ".row" . child ".column" . is i . is ".wide" . is ".large-screen"
-                . or is c . child ".column" . is i . is ".wide" . is ".large-screen"
-                . or is c . is ".column" . child ".column" . is i . is ".wide" . is ".large-screen" .> do
+              is c . is c . child ".row" . child ".column" . match i "large-screen"
+                . or is c . is c . child ".column" . is ".row" . child ".column" . match i "large-screen"
+                . or is c . is c . child ".column" . match i "large-screen"
+                . or is c . is c . is ".column" . child ".column" . match i "large-screen" .> do
                   important $ Styles.width =: per (n * 6.25)
     
         atMedia "only screen and (min-width: 1920px)" $ do
             for_ (zip [1..] cs) $ \(n,i) -> do
-              is c . child ".row" . child ".column" . is i . is ".wide" . is ".widescreen" 
-                . or is c . child ".column" . is ".row" . child ".column" . is i . is ".wide" . is ".widescreen"
-                . or is c . child ".column" . is i . is ".wide" . is ".widescreen"
-                . or is c . is ".column" . child ".column" . is i . is ".wide" . is ".widescreen" .> do
+              is c . is c . child ".row" . child ".column" . match i "widescreen"
+                . or is c . is c . child ".column" . is ".row" . child ".column" . match i "widescreen"
+                . or is c . is c . child ".column" . match i "widescreen"
+                . or is c . is c . is ".column" . child ".column" . match i "widescreen" .> do
                   important $ Styles.width =: per (n * 6.25)
                         
         -- CENTERED
