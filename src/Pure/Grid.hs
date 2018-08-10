@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, PatternSynonyms, DuplicateRecordFields, RecordWildCards, ViewPatterns, MultiParamTypeClasses, TypeFamilies, DeriveGeneric, TemplateHaskell, DeriveAnyClass #-}
+{-# LANGUAGE OverloadedStrings, PatternSynonyms, DuplicateRecordFields, RecordWildCards, ViewPatterns, MultiParamTypeClasses, TypeFamilies, DeriveGeneric, TemplateHaskell, DeriveAnyClass, FlexibleContexts #-}
 module Pure.Grid where
 
 import Pure hiding (textAlign,verticalAlign,width)
