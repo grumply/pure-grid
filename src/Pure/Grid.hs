@@ -87,13 +87,13 @@ celledClass Internally = "interally-celled celled"
 celledClass Outlined   = "celled"  
 celledClass NonCelled  = ""
 
-data TextAlignment = NoTextAlign | LeftAlign | RightAlign | CenterAligned | Justified
+data TextAlignment = NoTextAlign | LeftAlign | RightAlign | CenterAlign | Justify
   deriving (Eq,Ord,Generic,Default)
 textAlignmentClass :: TextAlignment -> Txt
 textAlignmentClass LeftAlign = "aligned left-aligned"
 textAlignmentClass RightAlign = "aligned right-aligned"
-textAlignmentClass CenterAligned = "aligned center-aligned"
-textAlignmentClass Justified = "justified"
+textAlignmentClass CenterAlign = "aligned center-aligned"
+textAlignmentClass Justify = "justified"
 textAlignmentClass NoTextAlign = ""
 
 data VerticalAlignment = NoVerticalAlign | TopAlign | BottomAlign | MiddleAlign
@@ -708,7 +708,9 @@ instance Themeable GridT where
              ] $ \(med,pad) -> 
                     atMedia ("only screen and " <> med) $
                         is c . is ".page" .> do
-                            Styles.width =: auto
+                            -- since we're relying on box-sizing: border-box, 
+                            -- we can do width 100% rather than width: auto
+                            Styles.width =: per 100
                             marginLeft =: ems 0
                             marginRight =: ems 0
                             paddingLeft =: pad
@@ -1276,7 +1278,9 @@ instance Themeable GridT where
 
         atMedia "only screen and (min-width: 768px) and (max-width: 991px)" $ do
             is c . is ".doubling" .> 
-                Styles.width =: auto
+                -- since we're relying on box-sizing: border-box, 
+                -- we can do width 100% rather than width: auto
+                Styles.width =: per 100
 
             is c . child ".row" . is ".doubling" 
               . or is c . is ".doubling" . child ".row" .> do
@@ -1322,7 +1326,9 @@ instance Themeable GridT where
 
         atMedia "only screen and (max-width: 767px)" $ do
             is c . is ".stackable" .> do
-                Styles.width =: auto
+                -- since we're relying on box-sizing: border-box, 
+                -- we can do width 100% rather than width: auto
+                Styles.width =: per 100
                 important $ marginLeft =: ems 0
                 important $ marginRight =: ems 0
 
