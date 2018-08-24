@@ -822,14 +822,15 @@ instance Themeable GridT where
 
         -- PADDED
 
-        is c . is ".padded" . isn't ".vertically-padded" . isn't ".horizontally-padded" .> do
+        -- overrode the stackable margin by increasing specificity with `is c . is c`
+        is c . is c . is ".padded" . isn't ".vertically-padded" . isn't ".horizontally-padded" .> do
             important $ margin =: ems 0
 
-        is c . is ".padded" . is ".horizontally-padded" .> do
+        is c . is c . is ".padded" . is ".horizontally-padded" .> do
             important $ marginLeft =: ems 0
             important $ marginRight =: ems 0
 
-        is c . is ".padded" . is ".vertically-padded" .> do
+        is c . is c . is ".padded" . is ".vertically-padded" .> do
             important $ marginTop =: ems 0
             important $ marginBottom =: ems 0
 
