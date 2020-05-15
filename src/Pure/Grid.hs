@@ -1,32 +1,18 @@
-{-# LANGUAGE OverloadedStrings, PatternSynonyms, DuplicateRecordFields, RecordWildCards, ViewPatterns, MultiParamTypeClasses, TypeFamilies, DeriveGeneric, TemplateHaskell, DeriveAnyClass, FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings, PatternSynonyms, DuplicateRecordFields, RecordWildCards, ViewPatterns, MultiParamTypeClasses, TypeFamilies, DeriveGeneric, TemplateHaskell, DeriveAnyClass, FlexibleContexts, TypeApplications #-}
 module Pure.Grid where
 
 import Pure hiding (textAlign,verticalAlign,width)
-
-import Pure.Data.CSS
-
-import qualified Pure.Data.Styles as Styles
-import Pure.Data.Styles hiding (width,textAlign,verticalAlign)
-
 import Pure.Data.Cond
-
 import Pure.Data.Prop
-
 import qualified Pure.Data.Txt as Txt
-
-import Pure.Theme
+import Pure.Theme as CSS hiding (textAlign,verticalAlign,width)
+import qualified Pure.Theme as CSS
 
 import Control.Arrow ((&&&))
-import Control.Monad (void)
-import Data.Foldable (for_)
-import Data.Function ((&))
-import Data.Monoid ((<>))
 import GHC.Generics as G
-
 import Prelude hiding (or)
 
 import Pure.Grid.Theme
-
 
 widthProp :: Txt -> Txt -> Bool -> Txt
 widthProp val widthClass canEqual
@@ -297,7 +283,7 @@ instance Pure Grid where
                 , widthProp columns "column" True
                 ]
         in
-            as (features & Classes cs & Theme GridT) children
+            as (features & Classes cs & Themed @GridT) children
 
 instance HasProp As Grid where
     type Prop As Grid = Features -> [View] -> View
@@ -583,9 +569,10 @@ instance HasProp VerticalAlign Row where
     getProp _ = verticalAlign
     setProp _ v gr = gr { verticalAlign = v }
 
-instance Themeable GridT where
-    theme _ _ = $(mkRawCSS $ void $ do
+instance Theme GridT where
+    theme _ = $(mkRawCSS $ void $ do
         let c = "." <> gridThemeNamespace
+            cs :: [Txt]
             cs = [".one",".two",".three",".four",".five",".six",".seven",".eight"
                  ,".nine",".ten",".eleven",".twelve",".thirteen",".fourteen",".fifteen",".sixteen"
                  ]
@@ -642,10 +629,10 @@ instance Themeable GridT where
           . or is c . child ".row" . child ".column" .> do
             position =: relative
             display =: inlineBlock
-            Styles.width =: per 6.25
+            CSS.width =: per 6.25
             paddingLeft =: rems 1
             paddingRight =: rems 1
-            Styles.verticalAlign =: top
+            CSS.verticalAlign =: top
 
         is c . child "*" .> do
             paddingLeft =: rems 1
@@ -669,7 +656,7 @@ instance Themeable GridT where
             "-webkit-box-align" =: stretch
             "-ms-flex-align" =: stretch
             "align-items" =: stretch
-            important $ Styles.width =: per 100
+            important $ CSS.width =: per 100
             padding =: rems 0
             paddingTop =: rems 1
             paddingBottom =: rems 1
@@ -710,7 +697,7 @@ instance Themeable GridT where
                         is c . is ".page" .> do
                             -- since we're relying on box-sizing: border-box, 
                             -- we can do width 100% rather than width: auto
-                            Styles.width =: per 100
+                            CSS.width =: per 100
                             marginLeft =: ems 0
                             marginRight =: ems 0
                             paddingLeft =: pad
@@ -720,15 +707,15 @@ instance Themeable GridT where
 
         is c . child ".column" . is ":only-child" 
           . or is c . child ".row" . child ".column" . is ":only-child" .>
-            Styles.width =: per 100
+            CSS.width =: per 100
 
         for_ (zip [1..] cs) $ \(n,i) -> do
           is c . is ".column" . is i . child ".row" . child ".column" 
             . or is c . is ".column" . is i . child ".column" . isn't ".row" .>
-              Styles.width =: per (100 / n)
+              CSS.width =: per (100 / n)
 
           is c . child ".column" . is i . is ".row" . child ".column" .> do
-              important $ Styles.width =: per (100 / n)
+              important $ CSS.width =: per (100 / n)
 
         is c . is ".celled" . is ".page" .> do
             "-webkit-box-shadow" =: none
@@ -741,7 +728,7 @@ instance Themeable GridT where
             . or is c . child ".column" . is ".row" . child ".column" . is i . is ".wide"
             . or is c . child ".column" . is i . is ".wide"
             . or is c . is ".column" . child ".column" . is i . is ".wide" .> do
-              important $ Styles.width =: per (n * 6.25)
+              important $ CSS.width =: per (n * 6.25)
 
         -- PER-DEVICE WIDTH
 
@@ -753,7 +740,7 @@ instance Themeable GridT where
                 . or is c . is c . child ".column" . is ".row" . child ".column" . match i "mobile" 
                 . or is c . is c . child ".column" . match i "mobile"
                 . or is c . is c . is ".column" . child ".column" . match i "mobile" .> do
-                  important $ Styles.width =: per (n * 6.25)
+                  important $ CSS.width =: per (n * 6.25)
  
         atMedia "only screen and (min-width: 768px) and (max-width: 991px)" $ do
             for_ (zip [1..] cs) $ \(n,i) -> do
@@ -761,7 +748,7 @@ instance Themeable GridT where
                 . or is c . is c . child ".column" . is ".row" . child ".column" . match i "tablet"
                 . or is c . is c . child ".column" . match i "tablet"
                 . or is c . is c . is ".column" . child ".column" . match i "tablet" .> do
-                  important $ Styles.width =: per (n * 6.25)
+                  important $ CSS.width =: per (n * 6.25)
   
         atMedia "only screen and (min-width: 992px)" $ do
             for_ (zip [1..] cs) $ \(n,i) -> do
@@ -769,7 +756,7 @@ instance Themeable GridT where
                 . or is c . is c . child ".column" . is ".row" . child ".column" . match i "computer"
                 . or is c . is c . child ".column" . match i "computer"
                 . or is c . is c . is ".column" . child ".column" . match i "computer" .> do
-                  important $ Styles.width =: per (n * 6.25)
+                  important $ CSS.width =: per (n * 6.25)
    
         atMedia "only screen and (min-width: 1200px) and (max-width: 1919px)" $ do
             for_ (zip [1..] cs) $ \(n,i) -> do
@@ -777,7 +764,7 @@ instance Themeable GridT where
                 . or is c . is c . child ".column" . is ".row" . child ".column" . match i "large-screen"
                 . or is c . is c . child ".column" . match i "large-screen"
                 . or is c . is c . is ".column" . child ".column" . match i "large-screen" .> do
-                  important $ Styles.width =: per (n * 6.25)
+                  important $ CSS.width =: per (n * 6.25)
     
         atMedia "only screen and (min-width: 1920px)" $ do
             for_ (zip [1..] cs) $ \(n,i) -> do
@@ -785,14 +772,14 @@ instance Themeable GridT where
                 . or is c . is c . child ".column" . is ".row" . child ".column" . match i "widescreen"
                 . or is c . is c . child ".column" . match i "widescreen"
                 . or is c . is c . is ".column" . child ".column" . match i "widescreen" .> do
-                  important $ Styles.width =: per (n * 6.25)
+                  important $ CSS.width =: per (n * 6.25)
                         
         -- CENTERED
 
         is c . is ".centered"
           . or is c . is ".centered" . child ".row" 
           . or is c . child ".row" . is ".centered" .> do
-            Styles.textAlign =: center
+            CSS.textAlign =: center
             "-webkit-box-pack" =: center
             "-ms-flex-pack" =: center
             justifyContent =: center
@@ -800,7 +787,7 @@ instance Themeable GridT where
         is c . is ".centered" . child ".column" . isn't ".aligned" . isn't ".justified" . isn't ".row"
           . or is c . is ".centered" . child ".row" . child ".column" . isn't ".aligned" . isn't ".justified"
           . or is c . has ".row" . is ".centered" . child ".column" . isn't ".aligned" . isn't ".justified" .>
-            Styles.textAlign =: left
+            CSS.textAlign =: left
 
         is c . child ".column" . is ".centered" 
           . or is c . child ".row" . child ".column" . is ".centered" .> do
@@ -886,14 +873,14 @@ instance Themeable GridT where
             content =: emptyQuotes
             top =: ems 0
             left =: pxs 0
-            Styles.width =: "calc(" <> per 100 <> " - " <> rems 2 <> ")"
+            CSS.width =: "calc(" <> per 100 <> " - " <> rems 2 <> ")"
             height =: pxs 1
             margin =: per 0 <<>> rems 1
             "-webkit-box-shadow" =: pxs 0 <<>> neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
             "box-shadow" =: pxs 0 <<>> neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> rgba(34,36,38,0.15)
 
         is c . is ".divided" . is ".padded" . is ".horizontally-padded" .>
-            Styles.width =: per 100
+            CSS.width =: per 100
 
         is c . is ".divided" . is ".vertically-divided" . child ".row" . is ":first-child" . is ":before" .> do
             "-webkit-box-shadow" =: none
@@ -916,23 +903,23 @@ instance Themeable GridT where
         is c . is ".divided" . is ".vertically-divided" . is ".relaxed" . child ".row" . is ":before" .> do
             marginLeft =: rems 1.5
             marginRight =: rems 1.5
-            Styles.width =: "calc(" <> per 100 <> " - " <> rems 3 <> ")"
+            CSS.width =: "calc(" <> per 100 <> " - " <> rems 3 <> ")"
 
         is c . is ".divided" . is ".vertically-divided" . is ".relaxed" . is ".very-relaxed" . child ".row" . is ":before" .> do
             marginLeft =: rems 5
             marginRight =: rems 5
-            Styles.width =: "calc(" <> per 100 <> " - " <> rems 5 <> ")" -- is this right, shoud it not be rems 10?
+            CSS.width =: "calc(" <> per 100 <> " - " <> rems 5 <> ")" -- is this right, shoud it not be rems 10?
 
         -- CELLED
 
         is c . is ".celled" .> do
-            Styles.width =: per 100
+            CSS.width =: per 100
             margin =: ems 1 <<>> ems 0
             "-webkit-box-shadow" =: pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> pxs 1 <<>> "#D4D4D5"
             "box-shadow" =: pxs 0 <<>> pxs 0 <<>> pxs 0 <<>> pxs 1 <<>> "#D4D4D5"
 
         is c . is ".celled" . child ".row" .> do
-            important $ Styles.width =: per 100
+            important $ CSS.width =: per 100
             margin =: ems 0
             padding =: ems 0
             "-webkit-box-shadow" =: pxs 0 <<>> neg (pxs 1) <<>> pxs 0 <<>> pxs 0 <<>> "#D4D4D5"
@@ -1280,7 +1267,7 @@ instance Themeable GridT where
             is c . is ".doubling" .> 
                 -- since we're relying on box-sizing: border-box, 
                 -- we can do width 100% rather than width: auto
-                Styles.width =: per 100
+                CSS.width =: per 100
 
             is c . child ".row" . is ".doubling" 
               . or is c . is ".doubling" . child ".row" .> do
@@ -1300,7 +1287,7 @@ instance Themeable GridT where
                 is c . is ".column" . is ".doubling" . is sz . child ".row" . child ".column" 
                   . or is c . is ".column" . is ".doubling" . is sz . child ".column" . isn't ".row"
                   . or is c . child ".row.row" . is ".column" . is ".doubling" . is sz . child ".column" .> do
-                    important $ Styles.width =: per (1 / n)
+                    important $ CSS.width =: per (1 / n)
 
         atMedia "only screen and (max-width: 767px)" $ do
             is c . child ".row" . is ".doubling" 
@@ -1320,7 +1307,7 @@ instance Themeable GridT where
                 is c . is ".column" . is ".doubling" . isn't ".stackable" . is sz . child ".row" . child ".column" 
                   . or is c . is ".column" . is ".doubling" . isn't ".stackable" . is sz . child ".column" . isn't ".row"
                   . or is c . child ".row.row" . is ".column" . is ".doubling" . isn't ".stackable" . is sz . child ".column" .> do
-                    important $ Styles.width =: per (1 / n)
+                    important $ CSS.width =: per (1 / n)
 
         -- STACKABLE
 
@@ -1328,7 +1315,7 @@ instance Themeable GridT where
             is c . is ".stackable" .> do
                 -- since we're relying on box-sizing: border-box, 
                 -- we can do width 100% rather than width: auto
-                Styles.width =: per 100
+                CSS.width =: per 100
                 important $ marginLeft =: ems 0
                 important $ marginRight =: ems 0
 
@@ -1339,7 +1326,7 @@ instance Themeable GridT where
               . or is c . is ".stackable" . child ".row" . child ".column"
               . or is c . is ".stackable" . child ".column" . isn't ".row"
               . or is c . child ".row" . is ".stackable.stackable" . child ".column" .> do
-                important $ Styles.width =: per 100
+                important $ CSS.width =: per 100
                 important $ margin =: ems 0 <<>> ems 0
                 important $ "-webkit-box-shadow" =: none
                 important $ "box-shadow" =: none
@@ -1411,7 +1398,7 @@ instance Themeable GridT where
               . or is c . is c . is c . child ".row" .child ".column" . is ".widescreen" .is ".only" . isn't ".mobile" .> do
                 important $ display =: none
         
-        let x `hideUnless` y = 
+        let x `hideUnless` y =
               is c . is c . is c . is ".only" . is x . isn't y
                 . or is c . is c . is c . child ".row" . is ".only" . is x . isn't y
                 . or is c . is c . is c . child ".column" . is ".only" . is x . isn't y
