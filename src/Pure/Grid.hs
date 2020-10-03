@@ -217,7 +217,7 @@ pattern Width p a <- (getProp Width_ &&& id -> (p,a)) where
     Width p a = setProp Width_ p a
 
 pattern Equal = "equal"
-pattern One = "1"
+pattern One = "one"
 pattern Two = "two"
 pattern Three = "three"
 pattern Four = "four"
@@ -569,10 +569,10 @@ instance HasProp VerticalAlign Row where
     setProp _ v gr = gr { verticalAlign = v }
 
 instance Theme GridT where
-    theme _ = $(mkRawCSS $ void $ do
+    theme _ = do
         let c = "." <> gridThemeNamespace
             cs :: [Txt]
-            cs = [".1",".two",".three",".four",".five",".six",".seven",".eight"
+            cs = [".one",".two",".three",".four",".five",".six",".seven",".eight"
                  ,".nine",".ten",".eleven",".twelve",".thirteen",".fourteen",".fifteen",".sixteen"
                  ]
 
@@ -1382,5 +1382,3 @@ instance Theme GridT where
         atMedia "only screen and (min-width: 1920px)" $ do
             ".mobile"       `hideUnless` ".computer"
             ".tablet"       `hideUnless` ".computer"
-
-        )
